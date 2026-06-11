@@ -1,5 +1,6 @@
 alter table meetings enable row level security;
 alter table registrations enable row level security;
+alter table admin_profiles enable row level security;
 
 drop policy if exists "Open meetings are readable" on meetings;
 create policy "Open meetings are readable"
@@ -47,3 +48,22 @@ with check (true);
 grant execute on function get_registration_by_token(uuid, text) to anon, authenticated;
 grant execute on function create_registration(uuid, text, text, text, boolean, integer, integer, integer, text, text, text) to anon, authenticated;
 grant execute on function update_registration_by_token(uuid, text, text, text, text, boolean, integer, integer, integer, text, text) to anon, authenticated;
+grant execute on function create_admin_profile(uuid, text) to anon, authenticated;
+
+drop policy if exists "Anyone can check admin usernames" on admin_profiles;
+create policy "Anyone can check admin usernames"
+on admin_profiles for select
+to anon, authenticated
+using (true);
+
+drop policy if exists "Users can create own admin profile" on admin_profiles;
+create policy "Users can create own admin profile"
+on admin_profiles for insert
+to authenticated
+with check (id = auth.uid());
+
+drop policy if exists "Users can read own admin profile" on admin_profiles;
+create policy "Users can read own admin profile"
+on admin_profiles for select
+to authenticated
+using (id = auth.uid());

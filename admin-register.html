@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>建立管理者帳號</title>
+    <link rel="stylesheet" href="css/styles.css">
+  </head>
+  <body>
+    <main class="page-shell narrow">
+      <section class="hero compact">
+        <div>
+          <p class="eyebrow">Admin Setup</p>
+          <h1>建立管理者帳號</h1>
+          <p class="hero-text">此頁只建議在初次設定時使用。建立完成後，請關閉管理者註冊開關。</p>
+        </div>
+      </section>
+
+      <section class="soft-card form-card">
+        <form id="adminRegisterForm" class="app-form">
+          <label>
+            帳號
+            <input name="username" type="text" autocomplete="username" required>
+          </label>
+          <label>
+            密碼
+            <input name="password" type="password" autocomplete="new-password" minlength="6" required>
+          </label>
+          <label>
+            確認密碼
+            <input name="confirm_password" type="password" autocomplete="new-password" minlength="6" required>
+          </label>
+
+          <p class="hint">請設定管理者登入用的帳號與密碼，系統會自動處理登入識別。</p>
+          <div id="registerMessage" class="message" hidden></div>
+          <button id="registerButton" class="primary-button" type="submit">建立管理者</button>
+          <a class="ghost-link" href="admin.html">回到管理登入</a>
+        </form>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js?v=20260611-2"></script>
+    <script src="js/supabaseClient.js?v=20260611-3"></script>
+    <script src="js/utils.js?v=20260611-3"></script>
+    <script src="js/adminRegister.js?v=20260611-5"></script>
+  </body>
+</html>

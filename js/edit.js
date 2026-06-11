@@ -1,4 +1,4 @@
-const supabase = window.supabaseClient;
+const db = window.supabaseClient;
 let registrationId = null;
 let editToken = null;
 let loadedMeeting = null;
@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function loadRegistration(renderDistrictOptions) {
   showMessage("#editMessage", "正在載入報名資料...", "info");
 
-  const { data, error } = await supabase.rpc("get_registration_by_token", {
+  const { data, error } = await db.rpc("get_registration_by_token", {
     registration_id: registrationId,
     token: editToken,
   });
@@ -89,7 +89,7 @@ async function handleUpdate(event) {
   $("#saveButton").disabled = true;
   $("#saveButton").textContent = "儲存中...";
 
-  const { data, error } = await supabase.rpc("update_registration_by_token", {
+  const { data, error } = await db.rpc("update_registration_by_token", {
     registration_id: registrationId,
     token: editToken,
     new_inviter_name: payload.inviter_name,

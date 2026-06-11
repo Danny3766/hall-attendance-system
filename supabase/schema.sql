@@ -49,6 +49,16 @@ create table if not exists registrations (
   )
 );
 
+create table if not exists admin_profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  username text not null unique,
+  created_at timestamptz not null default now(),
+
+  constraint admin_profiles_username_format check (username ~ '^[a-zA-Z0-9_-]{3,32}$')
+);
+
+create index if not exists admin_profiles_username_idx on admin_profiles (username);
+
 alter table registrations
 add column if not exists meal_required boolean not null default false;
 
@@ -233,5 +243,33 @@ begin
   into updated_registration;
 
   return updated_registration;
+end;
+$$;
+
+create or replace function create_admin_profile(
+  new_user_id uuid,
+  new_username text
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  normalized_username text;
+  created_profile jsonb;
+begin
+  normalized_username := lower(trim(new_username));
+
+  if normalized_username !~ '^[a-zA-Z0-9_-]{3,32}$' then
+    raise exception 'invalid username';
+  end if;
+
+  insert into admin_profiles (id, username)
+  values (new_user_id, normalized_username)
+  returning jsonb_build_object('id', id, 'username', username)
+  into created_profile;
+
+  return created_profile;
 end;
 $$;

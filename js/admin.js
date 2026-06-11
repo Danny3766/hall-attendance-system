@@ -1,4 +1,4 @@
-const supabase = window.supabaseClient;
+const db = window.supabaseClient;
 let registrations = [];
 let meetings = [];
 
@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("#meetingFilter").addEventListener("change", loadRegistrations);
   $("#exportCsv").addEventListener("click", exportCsv);
 
-  const { data } = await supabase.auth.getSession();
+  const { data } = await db.auth.getSession();
   if (data.session) {
     showAdmin();
     await loadMeetings();
@@ -19,15 +19,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function handleLogin(event) {
   event.preventDefault();
   const form = event.currentTarget;
+  const username = form.elements.namedItem("username").value.trim();
+  const password = form.elements.namedItem("password").value;
   showMessage("#adminMessage", "登入中...", "info");
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email: form.email.value.trim(),
-    password: form.password.value,
-  });
+  const { error } = await signInWithUsername(username, password);
 
   if (error) {
-    showMessage("#adminMessage", `登入失敗：${error.message}`, "error");
+    showMessage("#adminMessage", `登入失敗：${getSafeLoginErrorMessage(error.message)}`, "error");
     return;
   }
 
@@ -37,8 +36,47 @@ async function handleLogin(event) {
   showMessage("#adminMessage", "", "info");
 }
 
+async function signInWithUsername(username, password) {
+  let lastError = null;
+
+  for (const email of buildAdminLoginEmails(username)) {
+    const { error } = await db.auth.signInWithPassword({ email, password });
+    if (!error) return { error: null };
+    lastError = error;
+  }
+
+  return { error: lastError };
+}
+
+function buildAdminEmail(username) {
+  const domain = window.APP_CONFIG.ADMIN_EMAIL_DOMAIN || "hall-attendance.example.com";
+  return `${username}@${domain}`.toLowerCase();
+}
+
+function buildAdminLoginEmails(username) {
+  const domains = [
+    window.APP_CONFIG.ADMIN_EMAIL_DOMAIN || "hall-attendance.example.com",
+    ...(window.APP_CONFIG.ADMIN_LEGACY_EMAIL_DOMAINS || []),
+  ];
+
+  return [...new Set(domains)]
+    .filter(Boolean)
+    .map((domain) => `${username}@${domain}`.toLowerCase());
+}
+
+function getSafeLoginErrorMessage(message) {
+  const normalizedMessage = String(message || "").toLowerCase();
+
+  if (normalizedMessage.includes("invalid login") || normalizedMessage.includes("invalid credentials")) {
+    return "帳號或密碼不正確。";
+  }
+
+  if (normalizedMessage.includes("email")) return "帳號或密碼不正確。";
+  return "目前無法登入，請稍後再試。";
+}
+
 async function handleLogout() {
-  await supabase.auth.signOut();
+  await db.auth.signOut();
   $("#adminPanel").hidden = true;
   $("#loginPanel").hidden = false;
 }
@@ -49,7 +87,7 @@ function showAdmin() {
 }
 
 async function loadMeetings() {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("meetings")
     .select("id,title,meeting_date")
     .order("meeting_date", { ascending: false });
@@ -73,7 +111,7 @@ async function loadMeetings() {
 async function loadRegistrations() {
   showMessage("#adminMessage", "正在載入報名名單...", "info");
   const meetingId = $("#meetingFilter").value;
-  let query = supabase
+  let query = db
     .from("registrations")
     .select("*, meetings(title,meeting_date)")
     .order("created_at", { ascending: false });

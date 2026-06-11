@@ -1,4 +1,4 @@
-const supabase = window.supabaseClient;
+const db = window.supabaseClient;
 let selectedMeeting = null;
 let openMeetings = [];
 
@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function loadOpenMeetings() {
   showMessage("#formMessage", "正在載入開放報名的聚會...", "info");
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("meetings")
     .select("id,title,description,meeting_date,location,registration_deadline,is_open")
     .eq("is_open", true)
@@ -87,7 +87,7 @@ async function handleSubmit(event) {
   event.preventDefault();
   const form = event.currentTarget;
   const payload = collectRegistrationForm(form);
-  payload.meeting_id = form.meeting_id.value;
+  payload.meeting_id = form.elements.namedItem("meeting_id").value;
   payload.edit_token = crypto.randomUUID();
 
   const validationError = validateRegistrationData(payload);
@@ -107,7 +107,7 @@ async function handleSubmit(event) {
   $("#submitButton").textContent = "送出中...";
   showMessage("#formMessage", "正在送出報名資料...", "info");
 
-  const { data, error } = await supabase.rpc("create_registration", {
+  const { data, error } = await db.rpc("create_registration", {
     new_meeting_id: payload.meeting_id,
     new_inviter_name: payload.inviter_name,
     new_hall: payload.hall,
