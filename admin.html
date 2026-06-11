@@ -33,6 +33,65 @@
       </section>
 
       <section id="adminPanel" hidden>
+        <section class="admin-grid">
+          <section class="soft-card form-card">
+            <div class="section-heading">
+              <p class="eyebrow">Meeting</p>
+              <h2>建立聚會</h2>
+            </div>
+
+            <form id="meetingForm" class="app-form">
+              <label>
+                聚會名稱
+                <input name="title" type="text" placeholder="例如：06/14 主日聚會" required>
+              </label>
+
+              <div class="form-row">
+                <label>
+                  聚會時間
+                  <input name="meeting_date" type="datetime-local" required>
+                </label>
+                <label>
+                  報名截止時間
+                  <input name="registration_deadline" type="datetime-local">
+                </label>
+              </div>
+
+              <label>
+                地點
+                <input name="location" type="text" placeholder="例如：38 會所">
+              </label>
+
+              <label>
+                說明
+                <textarea name="description" rows="3" placeholder="顯示在報名頁左側的聚會說明"></textarea>
+              </label>
+
+              <label class="checkbox-card compact-checkbox">
+                <input name="is_open" type="checkbox" checked>
+                <span>
+                  <strong>開放報名</strong>
+                  <small>取消勾選後，報名頁不會顯示此聚會。</small>
+                </span>
+              </label>
+
+              <div id="meetingMessage" class="message" hidden></div>
+              <button id="createMeetingButton" class="primary-button" type="submit">建立聚會</button>
+            </form>
+          </section>
+
+          <section class="soft-card table-card">
+            <div class="section-heading meeting-list-heading">
+              <div>
+                <p class="eyebrow">Meetings</p>
+                <h2>聚會清單</h2>
+              </div>
+              <button id="refreshMeetings" class="ghost-button" type="button">重新整理</button>
+            </div>
+            <div id="meetingCards" class="meeting-list"></div>
+          </section>
+        </section>
+
         <div class="toolbar soft-card">
           <label>
             聚會篩選
@@ -81,6 +140,6 @@
     <script src="js/config.js?v=20260611-3"></script>
     <script src="js/supabaseClient.js?v=20260611-3"></script>
     <script src="js/utils.js?v=20260611-3"></script>
-    <script src="js/admin.js?v=20260611-8"></script>
+    <script src="js/admin.js?v=20260611-9"></script>
   </body>
 </html>

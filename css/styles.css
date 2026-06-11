@@ -338,6 +338,98 @@ select:disabled {
   margin: 14px 0 18px;
 }
 
+.admin-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  margin: 14px 0 18px;
+}
+
+.compact-checkbox {
+  align-items: flex-start;
+}
+
+.meeting-list-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.meeting-list {
+  display: grid;
+  gap: 12px;
+}
+
+.meeting-admin-card {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.meeting-admin-card h3 {
+  margin: 10px 0 6px;
+  font-size: 1.2rem;
+}
+
+.meeting-admin-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.meeting-admin-meta {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 0;
+}
+
+.meeting-admin-meta div {
+  display: grid;
+  gap: 2px;
+  padding: 9px 10px;
+  border-radius: 14px;
+  background: #f8f0dd;
+}
+
+.meeting-admin-meta dt {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.meeting-admin-meta dd {
+  margin: 0;
+  font-weight: 800;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.status-pill.open {
+  color: var(--success);
+  background: #e7f2df;
+}
+
+.status-pill.closed {
+  color: var(--muted);
+  background: rgba(245, 241, 232, 0.9);
+}
+
+.meeting-toggle {
+  width: 100%;
+}
+
 .toolbar-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -423,6 +515,7 @@ th {
   .button-row { grid-template-columns: 1fr 1fr; align-items: center; }
   .button-row .ghost-link { grid-column: 1 / -1; }
   .stats-grid { grid-template-columns: repeat(4, 1fr); }
+  .meeting-admin-meta { grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (min-width: 960px) {
@@ -435,6 +528,9 @@ th {
   .toolbar { padding: 30px; }
   .toolbar { grid-template-columns: minmax(280px, 420px) 1fr; align-items: end; }
   .toolbar-actions { display: flex; justify-content: flex-end; }
+  .admin-grid { grid-template-columns: minmax(360px, 0.9fr) minmax(420px, 1.1fr); align-items: start; }
+  .meeting-admin-card { grid-template-columns: 1fr auto; align-items: center; }
+  .meeting-toggle { width: auto; }
   .mobile-list { display: none; }
   .table-wrap { display: block; }
 }

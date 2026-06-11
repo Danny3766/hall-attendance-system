@@ -75,11 +75,14 @@ function renderMeetingSummary(meeting) {
 
   const picker = $("#meetingPicker");
   if (picker) {
-    picker.addEventListener("change", () => {
+    const handleMeetingPickerChange = () => {
       selectedMeeting = openMeetings.find((item) => item.id === picker.value) || null;
       $("#meeting_id").value = selectedMeeting ? selectedMeeting.id : "";
       renderMeetingSummary(selectedMeeting);
-    });
+    };
+
+    picker.addEventListener("change", handleMeetingPickerChange);
+    picker.addEventListener("input", handleMeetingPickerChange);
   }
 }
 

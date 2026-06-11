@@ -4,6 +4,8 @@ let meetings = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
   $("#loginForm").addEventListener("submit", handleLogin);
+  $("#meetingForm").addEventListener("submit", handleCreateMeeting);
+  $("#refreshMeetings").addEventListener("click", loadMeetings);
   $("#logoutButton").addEventListener("click", handleLogout);
   $("#meetingFilter").addEventListener("change", loadRegistrations);
   $("#exportCsv").addEventListener("click", exportCsv);
@@ -89,7 +91,7 @@ function showAdmin() {
 async function loadMeetings() {
   const { data, error } = await db
     .from("meetings")
-    .select("id,title,meeting_date")
+    .select("id,title,description,meeting_date,location,registration_deadline,is_open")
     .order("meeting_date", { ascending: false });
 
   if (error) {
@@ -98,6 +100,7 @@ async function loadMeetings() {
   }
 
   meetings = data || [];
+  renderMeetingList();
   const filter = $("#meetingFilter");
   filter.innerHTML = '<option value="">全部聚會</option>';
   meetings.forEach((meeting) => {
@@ -106,6 +109,119 @@ async function loadMeetings() {
     option.textContent = `${meeting.title}｜${formatDateTime(meeting.meeting_date)}`;
     filter.appendChild(option);
   });
+}
+
+async function handleCreateMeeting(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const payload = collectMeetingForm(form);
+  const validationError = validateMeetingData(payload);
+
+  if (validationError) {
+    showMessage("#meetingMessage", validationError, "error");
+    return;
+  }
+
+  $("#createMeetingButton").disabled = true;
+  $("#createMeetingButton").textContent = "建立中...";
+  showMessage("#meetingMessage", "正在建立聚會...", "info");
+
+  const { error } = await db.from("meetings").insert(payload);
+
+  if (error) {
+    showMessage("#meetingMessage", `建立聚會失敗：${error.message}`, "error");
+    resetMeetingButton();
+    return;
+  }
+
+  form.reset();
+  form.elements.namedItem("is_open").checked = true;
+  showMessage("#meetingMessage", "聚會已建立，報名頁會顯示開放中的聚會。", "success");
+  resetMeetingButton();
+  await loadMeetings();
+}
+
+function collectMeetingForm(form) {
+  const fields = form.elements;
+  return {
+    title: fields.namedItem("title").value.trim(),
+    description: fields.namedItem("description").value.trim() || null,
+    meeting_date: toIsoDateTime(fields.namedItem("meeting_date").value),
+    location: fields.namedItem("location").value.trim() || null,
+    registration_deadline: toIsoDateTime(fields.namedItem("registration_deadline").value),
+    is_open: fields.namedItem("is_open").checked,
+  };
+}
+
+function validateMeetingData(data) {
+  if (!data.title) return "請填寫聚會名稱。";
+  if (!data.meeting_date) return "請選擇聚會時間。";
+  if (data.registration_deadline && new Date(data.registration_deadline) >= new Date(data.meeting_date)) {
+    return "報名截止時間需早於聚會時間。";
+  }
+  return "";
+}
+
+function toIsoDateTime(value) {
+  return value ? new Date(value).toISOString() : null;
+}
+
+function resetMeetingButton() {
+  $("#createMeetingButton").disabled = false;
+  $("#createMeetingButton").textContent = "建立聚會";
+}
+
+function renderMeetingList() {
+  const list = $("#meetingCards");
+  list.innerHTML = "";
+
+  if (meetings.length === 0) {
+    list.innerHTML = '<p class="empty-state">目前尚未建立聚會。</p>';
+    return;
+  }
+
+  meetings.forEach((meeting) => {
+    const card = document.createElement("article");
+    card.className = "meeting-admin-card";
+    card.innerHTML = `
+      <div>
+        <span class="status-pill ${meeting.is_open ? "open" : "closed"}">${meeting.is_open ? "開放中" : "已關閉"}</span>
+        <h3>${meeting.title}</h3>
+        <p>${meeting.description || "無說明"}</p>
+        <dl class="meeting-admin-meta">
+          <div><dt>時間</dt><dd>${formatDateTime(meeting.meeting_date)}</dd></div>
+          <div><dt>地點</dt><dd>${meeting.location || "未設定"}</dd></div>
+          <div><dt>截止</dt><dd>${formatDateTime(meeting.registration_deadline)}</dd></div>
+        </dl>
+      </div>
+      <button class="secondary-button meeting-toggle" type="button" data-id="${meeting.id}" data-open="${meeting.is_open ? "false" : "true"}">
+        ${meeting.is_open ? "關閉報名" : "開放報名"}
+      </button>
+    `;
+    list.appendChild(card);
+  });
+
+  list.querySelectorAll(".meeting-toggle").forEach((button) => {
+    button.addEventListener("click", () => toggleMeetingOpen(button.dataset.id, button.dataset.open === "true"));
+  });
+}
+
+async function toggleMeetingOpen(meetingId, isOpen) {
+  showMessage("#meetingMessage", "正在更新聚會狀態...", "info");
+
+  const { error } = await db
+    .from("meetings")
+    .update({ is_open: isOpen })
+    .eq("id", meetingId);
+
+  if (error) {
+    showMessage("#meetingMessage", `更新聚會狀態失敗：${error.message}`, "error");
+    return;
+  }
+
+  showMessage("#meetingMessage", isOpen ? "聚會已開放報名。" : "聚會已關閉報名。", "success");
+  await loadMeetings();
+  await loadRegistrations();
 }
 
 async function loadRegistrations() {
