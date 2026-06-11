@@ -3,3 +3,6 @@ docs/
 .vscode/
 Thumbs.db
 .DS_Store
+node_modules/
+playwright-report/
+test-results/
