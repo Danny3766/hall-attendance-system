@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>聚會報名</title>
+    <link rel="stylesheet" href="css/styles.css">
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Meeting Registration</p>
+          <h1>聚會報名</h1>
+          <p class="hero-text">歡迎弟兄姊妹一同有分聚集。請填寫報名資料，若之後受邀人確定出席，可用修改連結回來調整。</p>
+        </div>
+      </section>
+
+      <section class="content-grid">
+        <aside id="meetingSummary" class="soft-card meeting-card">
+          <p>正在載入聚會資料...</p>
+        </aside>
+
+        <section class="soft-card form-card">
+          <div class="section-heading">
+            <p class="eyebrow">Register</p>
+            <h2>填寫報名資料</h2>
+          </div>
+
+          <form id="registrationForm" class="app-form">
+            <input id="meeting_id" name="meeting_id" type="hidden" required>
+
+            <div class="form-row">
+              <label>
+                邀請人
+                <input name="inviter_name" type="text" autocomplete="name" required>
+              </label>
+              <label>
+                會所
+                <select name="hall" required>
+                  <option value="">請選擇會所</option>
+                  <option value="38 會所">38 會所</option>
+                </select>
+              </label>
+            </div>
+
+            <label>
+              區
+              <select name="district" required>
+                <option value="">請選擇區</option>
+              </select>
+            </label>
+
+            <div class="meal-attendee-line">
+              <label class="checkbox-card">
+                <input name="meal_required" type="checkbox">
+                <span>
+                  <strong>需要用餐</strong>
+                  <small>勾選後填寫葷食與素食數量</small>
+                </span>
+              </label>
+
+              <div class="attendee-row">
+                <label>
+                  報名人數
+                  <input name="attendee_count" type="number" min="1" value="1" inputmode="numeric" required>
+                </label>
+              </div>
+            </div>
+
+            <div id="mealFields" class="form-row two meal-fields" hidden>
+              <label>
+                葷食數量
+                <input name="meat_meal_count" type="number" min="0" value="0" inputmode="numeric">
+              </label>
+              <label>
+                素食數量
+                <input name="vegetarian_meal_count" type="number" min="0" value="0" inputmode="numeric">
+              </label>
+            </div>
+
+            <label>
+              受邀人姓名
+              <textarea name="guest_names" rows="3" placeholder="例如：王弟兄、陳姊妹。若尚未確定可先留空。"></textarea>
+            </label>
+
+            <label>
+              備註
+              <textarea name="note" rows="3" placeholder="其他需要服事者知道的事項"></textarea>
+            </label>
+
+            <p class="hint">提醒：若需要用餐，葷食數量 + 素食數量需等於報名人數。</p>
+            <div id="formMessage" class="message" hidden></div>
+            <button id="submitButton" class="primary-button" type="submit">送出報名</button>
+          </form>
+        </section>
+      </section>
+    </main>
+
+    <script src="js/locationOptions.js?v=20260611-5"></script>
+    <script src="js/mealToggle.js?v=20260611-1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/supabaseClient.js?v=20260611-3"></script>
+    <script src="js/utils.js?v=20260611-3"></script>
+    <script src="js/register.js?v=20260611-3"></script>
+  </body>
+</html>

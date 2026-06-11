@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>報名管理</title>
+    <link rel="stylesheet" href="css/styles.css">
+  </head>
+  <body>
+    <main class="page-shell wide">
+      <section class="hero compact">
+        <div>
+          <p class="eyebrow">Admin</p>
+          <h1>報名管理</h1>
+          <p class="hero-text">查看聚會報名名單、統計餐點數量，並匯出 CSV。</p>
+        </div>
+      </section>
+
+      <section id="loginPanel" class="soft-card form-card narrow-card">
+        <h2>管理者登入</h2>
+        <form id="loginForm" class="app-form">
+          <label>
+            Email
+            <input name="email" type="email" autocomplete="email" required>
+          </label>
+          <label>
+            密碼
+            <input name="password" type="password" autocomplete="current-password" required>
+          </label>
+          <div id="adminMessage" class="message" hidden></div>
+          <button class="primary-button" type="submit">登入</button>
+        </form>
+      </section>
+
+      <section id="adminPanel" hidden>
+        <div class="toolbar soft-card">
+          <label>
+            聚會篩選
+            <select id="meetingFilter"></select>
+          </label>
+          <div class="toolbar-actions">
+            <button id="exportCsv" class="secondary-button" type="button">匯出 CSV</button>
+            <button id="logoutButton" class="ghost-button" type="button">登出</button>
+          </div>
+        </div>
+
+        <section class="stats-grid">
+          <article class="stat-card"><span>總筆數</span><strong id="totalRows">0</strong></article>
+          <article class="stat-card"><span>總報名人數</span><strong id="totalPeople">0</strong></article>
+          <article class="stat-card"><span>葷食總數</span><strong id="totalMeat">0</strong></article>
+          <article class="stat-card"><span>素食總數</span><strong id="totalVeg">0</strong></article>
+        </section>
+
+        <section class="soft-card table-card">
+          <div id="registrationCards" class="mobile-list"></div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>聚會</th>
+                  <th>邀請人</th>
+                  <th>會所</th>
+                  <th>區</th>
+                  <th>用餐</th>
+                  <th>報名</th>
+                  <th>葷食</th>
+                  <th>素食</th>
+                  <th>受邀人</th>
+                  <th>備註</th>
+                  <th>更新時間</th>
+                </tr>
+              </thead>
+              <tbody id="registrationTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/supabaseClient.js?v=20260611-3"></script>
+    <script src="js/utils.js?v=20260611-3"></script>
+    <script src="js/admin.js?v=20260611-3"></script>
+  </body>
+</html>

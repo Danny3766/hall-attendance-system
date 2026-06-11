@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>報名完成</title>
+    <link rel="stylesheet" href="css/styles.css">
+  </head>
+  <body>
+    <main class="page-shell narrow">
+      <section class="soft-card success-card">
+        <p class="eyebrow">Registration Complete</p>
+        <h1>報名完成</h1>
+        <p class="hero-text">願主祝福這次的聚集。請保存下方修改連結，之後若受邀人確定出席，可回來修改報名資料。</p>
+
+        <label class="link-box">
+          修改連結
+          <input id="editLink" type="text" readonly>
+        </label>
+
+        <div id="successMessage" class="message" hidden></div>
+        <div class="button-row">
+          <button id="copyLink" class="primary-button" type="button">複製修改連結</button>
+          <a id="goEdit" class="secondary-button" href="#">前往修改資料</a>
+          <a class="ghost-link" href="index.html">回到報名頁</a>
+        </div>
+      </section>
+    </main>
+
+    <script src="js/utils.js"></script>
+    <script src="js/success.js"></script>
+  </body>
+</html>

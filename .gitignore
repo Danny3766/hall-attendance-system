@@ -1,0 +1,5 @@
+js/config.js
+docs/
+.vscode/
+Thumbs.db
+.DS_Store
