@@ -33,14 +33,30 @@
       </section>
 
       <section id="adminPanel" hidden>
-        <section class="admin-grid">
-          <section class="soft-card form-card">
+        <section class="soft-card meeting-management-card">
+          <div class="section-heading meeting-list-heading">
+            <div>
+              <p class="eyebrow">Meetings</p>
+              <h2>聚會管理</h2>
+              <p class="section-description">先管理聚會清單，需要時再新增或編輯聚會資訊。</p>
+            </div>
+            <div class="meeting-heading-actions">
+              <button id="showMeetingForm" class="primary-button" type="button">新增聚會</button>
+              <button id="refreshMeetings" class="ghost-button" type="button">重新整理</button>
+            </div>
+          </div>
+
+          <div id="meetingStatusMessage" class="message" hidden></div>
+
+          <section id="meetingFormPanel" class="meeting-form-panel" hidden>
             <div class="section-heading">
               <p class="eyebrow">Meeting</p>
-              <h2>建立聚會</h2>
+              <h2 id="meetingFormTitle">建立聚會</h2>
             </div>
 
             <form id="meetingForm" class="app-form">
+              <input name="meeting_id" type="hidden">
+
               <label>
                 聚會名稱
                 <input name="title" type="text" placeholder="例如：06/14 主日聚會" required>
@@ -76,20 +92,14 @@
               </label>
 
               <div id="meetingMessage" class="message" hidden></div>
-              <button id="createMeetingButton" class="primary-button" type="submit">建立聚會</button>
+              <div class="form-actions">
+                <button id="saveMeetingButton" class="primary-button" type="submit">建立聚會</button>
+                <button id="cancelMeetingEdit" class="ghost-button" type="button" hidden>取消編輯</button>
+              </div>
             </form>
           </section>
 
-          <section class="soft-card table-card">
-            <div class="section-heading meeting-list-heading">
-              <div>
-                <p class="eyebrow">Meetings</p>
-                <h2>聚會清單</h2>
-              </div>
-              <button id="refreshMeetings" class="ghost-button" type="button">重新整理</button>
-            </div>
-            <div id="meetingCards" class="meeting-list"></div>
-          </section>
+          <div id="meetingCards" class="meeting-list"></div>
         </section>
 
         <div class="toolbar soft-card">
@@ -140,6 +150,6 @@
     <script src="js/config.js?v=20260611-3"></script>
     <script src="js/supabaseClient.js?v=20260611-3"></script>
     <script src="js/utils.js?v=20260611-3"></script>
-    <script src="js/admin.js?v=20260611-9"></script>
+    <script src="js/admin.js?v=20260611-10"></script>
   </body>
 </html>

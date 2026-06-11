@@ -338,11 +338,34 @@ select:disabled {
   margin: 14px 0 18px;
 }
 
-.admin-grid {
+.meeting-management-card {
+  padding: 22px;
+  margin: 14px 0 18px;
+}
+
+.section-description {
+  margin: 6px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.meeting-heading-actions {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 18px;
-  margin: 14px 0 18px;
+  gap: 10px;
+  width: 100%;
+}
+
+.meeting-form-panel {
+  margin-bottom: 18px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.meeting-form-panel[hidden] {
+  display: none;
 }
 
 .compact-checkbox {
@@ -350,9 +373,8 @@ select:disabled {
 }
 
 .meeting-list-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 12px;
   margin-bottom: 16px;
 }
@@ -427,6 +449,17 @@ select:disabled {
 }
 
 .meeting-toggle {
+  width: 100%;
+}
+
+.form-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.meeting-admin-card .meeting-toggle,
+.meeting-admin-card .meeting-edit {
   width: 100%;
 }
 
@@ -516,6 +549,9 @@ th {
   .button-row .ghost-link { grid-column: 1 / -1; }
   .stats-grid { grid-template-columns: repeat(4, 1fr); }
   .meeting-admin-meta { grid-template-columns: repeat(3, 1fr); }
+  .form-actions { grid-template-columns: 1fr auto; }
+  .meeting-list-heading { grid-template-columns: 1fr auto; align-items: start; }
+  .meeting-heading-actions { display: flex; width: auto; }
 }
 
 @media (min-width: 960px) {
@@ -528,9 +564,9 @@ th {
   .toolbar { padding: 30px; }
   .toolbar { grid-template-columns: minmax(280px, 420px) 1fr; align-items: end; }
   .toolbar-actions { display: flex; justify-content: flex-end; }
-  .admin-grid { grid-template-columns: minmax(360px, 0.9fr) minmax(420px, 1.1fr); align-items: start; }
-  .meeting-admin-card { grid-template-columns: 1fr auto; align-items: center; }
-  .meeting-toggle { width: auto; }
+  .meeting-admin-card { grid-template-columns: 1fr auto auto; align-items: center; }
+  .meeting-admin-card .meeting-toggle,
+  .meeting-admin-card .meeting-edit { width: auto; }
   .mobile-list { display: none; }
   .table-wrap { display: block; }
 }

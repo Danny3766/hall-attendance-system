@@ -4,7 +4,9 @@ let meetings = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
   $("#loginForm").addEventListener("submit", handleLogin);
+  $("#showMeetingForm").addEventListener("click", showCreateMeetingForm);
   $("#meetingForm").addEventListener("submit", handleCreateMeeting);
+  $("#cancelMeetingEdit").addEventListener("click", resetMeetingForm);
   $("#refreshMeetings").addEventListener("click", loadMeetings);
   $("#logoutButton").addEventListener("click", handleLogout);
   $("#meetingFilter").addEventListener("change", loadRegistrations);
@@ -100,6 +102,7 @@ async function loadMeetings() {
   }
 
   meetings = data || [];
+  meetings.sort((a, b) => Number(b.is_open) - Number(a.is_open) || new Date(b.meeting_date) - new Date(a.meeting_date));
   renderMeetingList();
   const filter = $("#meetingFilter");
   filter.innerHTML = '<option value="">全部聚會</option>';
@@ -115,6 +118,7 @@ async function handleCreateMeeting(event) {
   event.preventDefault();
   const form = event.currentTarget;
   const payload = collectMeetingForm(form);
+  const meetingId = form.elements.namedItem("meeting_id").value;
   const validationError = validateMeetingData(payload);
 
   if (validationError) {
@@ -122,22 +126,21 @@ async function handleCreateMeeting(event) {
     return;
   }
 
-  $("#createMeetingButton").disabled = true;
-  $("#createMeetingButton").textContent = "建立中...";
-  showMessage("#meetingMessage", "正在建立聚會...", "info");
+  setMeetingSaving(true, meetingId ? "儲存中..." : "建立中...");
+  showMessage("#meetingMessage", meetingId ? "正在儲存聚會..." : "正在建立聚會...", "info");
 
-  const { error } = await db.from("meetings").insert(payload);
+  const { error } = meetingId
+    ? await db.from("meetings").update(payload).eq("id", meetingId)
+    : await db.from("meetings").insert(payload);
 
   if (error) {
-    showMessage("#meetingMessage", `建立聚會失敗：${error.message}`, "error");
-    resetMeetingButton();
+    showMessage("#meetingMessage", `${meetingId ? "儲存" : "建立"}聚會失敗：${error.message}`, "error");
+    setMeetingSaving(false);
     return;
   }
 
-  form.reset();
-  form.elements.namedItem("is_open").checked = true;
-  showMessage("#meetingMessage", "聚會已建立，報名頁會顯示開放中的聚會。", "success");
-  resetMeetingButton();
+  resetMeetingForm();
+  showMessage("#meetingStatusMessage", meetingId ? "聚會資訊已更新。" : "聚會已建立，報名頁會顯示開放中的聚會。", "success");
   await loadMeetings();
 }
 
@@ -166,9 +169,39 @@ function toIsoDateTime(value) {
   return value ? new Date(value).toISOString() : null;
 }
 
-function resetMeetingButton() {
-  $("#createMeetingButton").disabled = false;
-  $("#createMeetingButton").textContent = "建立聚會";
+function setMeetingSaving(isSaving, text) {
+  const button = $("#saveMeetingButton");
+  button.disabled = isSaving;
+  button.textContent = isSaving ? text : (isEditingMeeting() ? "儲存修改" : "建立聚會");
+}
+
+function isEditingMeeting() {
+  return Boolean($("#meetingForm").elements.namedItem("meeting_id").value);
+}
+
+function resetMeetingForm(options = {}) {
+  const form = $("#meetingForm");
+  form.reset();
+  form.elements.namedItem("meeting_id").value = "";
+  form.elements.namedItem("is_open").checked = true;
+  $("#meetingFormTitle").textContent = "建立聚會";
+  $("#saveMeetingButton").textContent = "建立聚會";
+  $("#saveMeetingButton").disabled = false;
+  $("#cancelMeetingEdit").hidden = true;
+  $("#meetingFormPanel").hidden = true;
+  $("#showMeetingForm").hidden = false;
+
+  if (!options.keepMessage) showMessage("#meetingMessage", "", "info");
+}
+
+function showCreateMeetingForm() {
+  resetMeetingForm();
+  showMessage("#meetingStatusMessage", "", "info");
+  $("#meetingFormPanel").hidden = false;
+  $("#showMeetingForm").hidden = true;
+  $("#meetingFormTitle").textContent = "建立聚會";
+  $("#saveMeetingButton").textContent = "建立聚會";
+  $("#meetingForm").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function renderMeetingList() {
@@ -197,6 +230,7 @@ function renderMeetingList() {
       <button class="secondary-button meeting-toggle" type="button" data-id="${meeting.id}" data-open="${meeting.is_open ? "false" : "true"}">
         ${meeting.is_open ? "關閉報名" : "開放報名"}
       </button>
+      <button class="ghost-button meeting-edit" type="button" data-id="${meeting.id}">編輯</button>
     `;
     list.appendChild(card);
   });
@@ -204,6 +238,40 @@ function renderMeetingList() {
   list.querySelectorAll(".meeting-toggle").forEach((button) => {
     button.addEventListener("click", () => toggleMeetingOpen(button.dataset.id, button.dataset.open === "true"));
   });
+
+  list.querySelectorAll(".meeting-edit").forEach((button) => {
+    button.addEventListener("click", () => startEditMeeting(button.dataset.id));
+  });
+}
+
+function startEditMeeting(meetingId) {
+  const meeting = meetings.find((item) => item.id === meetingId);
+  if (!meeting) return;
+
+  const form = $("#meetingForm");
+  form.elements.namedItem("meeting_id").value = meeting.id;
+  form.elements.namedItem("title").value = meeting.title || "";
+  form.elements.namedItem("meeting_date").value = toLocalDateTimeInputValue(meeting.meeting_date);
+  form.elements.namedItem("registration_deadline").value = toLocalDateTimeInputValue(meeting.registration_deadline);
+  form.elements.namedItem("location").value = meeting.location || "";
+  form.elements.namedItem("description").value = meeting.description || "";
+  form.elements.namedItem("is_open").checked = Boolean(meeting.is_open);
+
+  $("#meetingFormTitle").textContent = "編輯聚會";
+  $("#saveMeetingButton").textContent = "儲存修改";
+  $("#cancelMeetingEdit").hidden = false;
+  $("#meetingFormPanel").hidden = false;
+  $("#showMeetingForm").hidden = true;
+  showMessage("#meetingStatusMessage", "", "info");
+  showMessage("#meetingMessage", "正在編輯既有聚會，儲存後會更新報名頁顯示。", "info");
+  form.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function toLocalDateTimeInputValue(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  const pad = (number) => String(number).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
 async function toggleMeetingOpen(meetingId, isOpen) {
@@ -219,7 +287,7 @@ async function toggleMeetingOpen(meetingId, isOpen) {
     return;
   }
 
-  showMessage("#meetingMessage", isOpen ? "聚會已開放報名。" : "聚會已關閉報名。", "success");
+  showMessage("#meetingStatusMessage", isOpen ? "聚會已開放報名。" : "聚會已關閉報名。", "success");
   await loadMeetings();
   await loadRegistrations();
 }
