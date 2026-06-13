@@ -37,6 +37,9 @@ function validateRegistrationData(data) {
   if (data.meal_required && totalMealCount < 1) {
     return "若需要用餐，請至少勾選 1 份葷食或素食。";
   }
+  if (data.meal_required && totalMealCount > data.attendee_count) {
+    return "餐點數量不可超過報名人數。";
+  }
   return "";
 }
 

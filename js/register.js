@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const lookupForm = $("#lookupForm");
   window.setupLocationOptions(lookupForm);
   setupRegistrationMealControls();
+  form.elements.namedItem("inviter_name").addEventListener("input", syncRegistrationGuestsAndAttendeeCount);
   $("#addRegistrationGuest").addEventListener("click", () => addRegistrationGuestInput(""));
   addRegistrationGuestInput("");
   await loadOpenMeetings();
@@ -250,6 +251,7 @@ function syncRegistrationGuestsAndAttendeeCount() {
   form.elements.namedItem("guest_names").value = guests.join("、");
   form.elements.namedItem("attendee_count").value = 1 + guests.length;
   setText("#registrationAttendeeCountHint", `目前報名人數：${1 + guests.length} 人`);
+  $("#registrationAttendeeCountHint").hidden = !form.elements.namedItem("inviter_name").value.trim();
   guestEntries.forEach((entry) => syncRegistrationGuestMealState(entry));
   syncRegistrationMealSummary();
 }
@@ -296,6 +298,7 @@ function syncRegistrationMealSummary() {
   const hiddenMealRequired = document.querySelector('#registrationForm [name="meal_required"]');
   const hiddenMeatCount = document.querySelector('#registrationForm [name="meat_meal_count"]');
   const hiddenVegetarianCount = document.querySelector('#registrationForm [name="vegetarian_meal_count"]');
+  const mealCountSummary = document.querySelector(".meal-count-summary");
   let meatCount = 0;
   let vegetarianCount = 0;
 
@@ -315,9 +318,11 @@ function syncRegistrationMealSummary() {
     if (mealType === "vegetarian") vegetarianCount += 1;
   });
 
-  hiddenMealRequired.checked = hasAnyMealSelection();
+  const hasMealSelection = hasAnyMealSelection();
+  hiddenMealRequired.checked = hasMealSelection;
   hiddenMeatCount.value = meatCount;
   hiddenVegetarianCount.value = vegetarianCount;
+  if (mealCountSummary) mealCountSummary.hidden = !hasMealSelection;
   setText("#meatMealCountDisplay", String(meatCount));
   setText("#vegetarianMealCountDisplay", String(vegetarianCount));
 }

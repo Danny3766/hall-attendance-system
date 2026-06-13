@@ -62,7 +62,6 @@ function renderConfirmMeetingSummary(meeting) {
     <dl class="meeting-meta">
       <div><dt>時間</dt><dd>${formatDateTime(meeting.meeting_date)}</dd></div>
       <div><dt>地點</dt><dd>${escapeHtml(meeting.location || "待公布")}</dd></div>
-      <div><dt>截止</dt><dd>${formatDateTime(meeting.registration_deadline)}</dd></div>
     </dl>
   `;
 }

@@ -39,7 +39,7 @@ create table if not exists registrations (
   constraint meal_count_valid check (
     (
       meal_required = true
-      and meat_meal_count + vegetarian_meal_count = attendee_count
+      and meat_meal_count + vegetarian_meal_count between 1 and attendee_count
     )
     or (
       meal_required = false
@@ -73,7 +73,7 @@ alter table registrations
 add constraint meal_count_valid check (
   (
     meal_required = true
-    and meat_meal_count + vegetarian_meal_count = attendee_count
+    and meat_meal_count + vegetarian_meal_count between 1 and attendee_count
   )
   or (
     meal_required = false
