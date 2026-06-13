@@ -39,6 +39,9 @@ function validateRegistrationData(data) {
   return "";
 }
 
+const TAIWAN_TIME_ZONE = "Asia/Taipei";
+const TAIWAN_UTC_OFFSET = "+08:00";
+
 function collectRegistrationForm(form) {
   const fields = form.elements;
   const mealRequired = fields.namedItem("meal_required").checked;
@@ -58,6 +61,7 @@ function collectRegistrationForm(form) {
 function formatDateTime(value) {
   if (!value) return "未設定";
   return new Intl.DateTimeFormat("zh-TW", {
+    timeZone: TAIWAN_TIME_ZONE,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

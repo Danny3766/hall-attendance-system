@@ -166,7 +166,7 @@ function validateMeetingData(data) {
 }
 
 function toIsoDateTime(value) {
-  return value ? new Date(value).toISOString() : null;
+  return value ? new Date(`${value}${value.length === 16 ? ":00" : ""}${TAIWAN_UTC_OFFSET}`).toISOString() : null;
 }
 
 function setMeetingSaving(isSaving, text) {
@@ -269,9 +269,17 @@ function startEditMeeting(meetingId) {
 
 function toLocalDateTimeInputValue(value) {
   if (!value) return "";
-  const date = new Date(value);
-  const pad = (number) => String(number).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TAIWAN_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date(value));
+  const getPart = (type) => parts.find((part) => part.type === type)?.value || "";
+  return `${getPart("year")}-${getPart("month")}-${getPart("day")}T${getPart("hour")}:${getPart("minute")}`;
 }
 
 async function toggleMeetingOpen(meetingId, isOpen) {

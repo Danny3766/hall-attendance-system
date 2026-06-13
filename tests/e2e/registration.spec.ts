@@ -6,8 +6,9 @@ test('registration page renders the main form', async ({ page }) => {
   await expect(page).toHaveTitle('聚會報名');
   await expect(page.getByRole('heading', { name: '聚會報名', level: 1 })).toBeVisible();
   await expect(page.getByRole('heading', { name: '填寫報名資料' })).toBeVisible();
-  await expect(page.getByLabel('邀請人')).toBeVisible();
-  await expect(page.getByLabel('會所')).toBeVisible();
+  const registrationForm = page.locator('#registrationForm');
+  await expect(registrationForm.getByLabel('邀請人')).toBeVisible();
+  await expect(registrationForm.getByLabel('會所')).toBeVisible();
   await expect(page.getByRole('button', { name: '送出報名' })).toBeVisible();
 });
 
