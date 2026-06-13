@@ -1,11 +1,13 @@
 const db = window.supabaseClient;
 let selectedMeeting = null;
 let openMeetings = [];
+let registrationGuestSequence = 0;
 
 document.addEventListener("DOMContentLoaded", async () => {
   const form = $("#registrationForm");
   const lookupForm = $("#lookupForm");
   window.setupLocationOptions(lookupForm);
+  setupRegistrationMealControls();
   $("#addRegistrationGuest").addEventListener("click", () => addRegistrationGuestInput(""));
   addRegistrationGuestInput("");
   await loadOpenMeetings();
@@ -51,31 +53,30 @@ function renderMeetingSummary(meeting) {
     return;
   }
 
-  const meetingPicker = openMeetings.length > 1
+  const meetingHeading = openMeetings.length > 1
     ? `
-      <label class="meeting-picker">
-        選擇開放報名的聚會
+      <label class="meeting-title-picker">
+        <span class="sr-only">選擇開放報名的聚會</span>
         <select id="meetingPicker">
           ${openMeetings.map((item) => `
             <option value="${item.id}" ${item.id === meeting.id ? "selected" : ""}>
-              ${item.title}｜${formatDateTime(item.meeting_date)}
+              ${item.title}
             </option>
           `).join("")}
         </select>
       </label>
     `
-    : "";
+    : `<h2>${meeting.title}</h2>`;
 
   card.innerHTML = `
     <p class="eyebrow">目前開放報名</p>
-    <h2>${meeting.title}</h2>
+    ${meetingHeading}
     <p>${meeting.description || "歡迎弟兄姊妹一同有分聚集。"}</p>
     <dl class="meeting-meta">
       <div><dt>時間</dt><dd>${formatDateTime(meeting.meeting_date)}</dd></div>
       <div><dt>地點</dt><dd>${meeting.location || "待公布"}</dd></div>
-      <div><dt>截止</dt><dd>${formatDateTime(meeting.registration_deadline)}</dd></div>
+      <div><dt>報名截止</dt><dd>${formatDateTime(meeting.registration_deadline)}</dd></div>
     </dl>
-    ${meetingPicker}
   `;
 
   const picker = $("#meetingPicker");
@@ -99,9 +100,14 @@ async function handleSubmit(event) {
   payload.meeting_id = form.elements.namedItem("meeting_id").value;
   payload.edit_token = crypto.randomUUID();
 
+  const mealSelectionError = validateRegistrationMealSelections();
   const validationError = validateRegistrationData(payload);
   if (!payload.meeting_id) showMessage("#formMessage", "請選擇聚會。", "error");
   if (!payload.meeting_id) return;
+  if (mealSelectionError) {
+    showMessage("#formMessage", mealSelectionError, "error");
+    return;
+  }
   if (validationError) {
     showMessage("#formMessage", validationError, "error");
     return;
@@ -187,14 +193,43 @@ function resetLookupButton() {
 }
 
 function addRegistrationGuestInput(value) {
+  registrationGuestSequence += 1;
   const row = document.createElement("div");
-  row.className = "guest-row";
+  row.className = "registration-guest-entry";
   row.innerHTML = `
-    <input class="registration-guest-input" type="text" value="${escapeHtml(value)}" placeholder="請輸入受邀人姓名">
-    <button class="ghost-button guest-remove" type="button">移除</button>
+    <div class="guest-row">
+      <input class="registration-guest-input" type="text" value="${escapeHtml(value)}" placeholder="請輸入受邀人姓名">
+      <button class="ghost-button guest-remove" type="button">移除</button>
+    </div>
+    <div class="guest-meal-panel" hidden>
+      <label class="checkbox-card compact-checkbox guest-meal-toggle-card">
+        <input class="guest-meal-toggle" type="checkbox">
+        <span>
+          <strong>需要用餐</strong>
+          <small>勾選後選擇葷食或素食</small>
+        </span>
+      </label>
+      <div class="diet-choice-group guest-diet-choice" hidden>
+        <label class="option-chip">
+          <input class="guest-meal-type" name="guest_meal_type_${registrationGuestSequence}" type="radio" value="meat">
+          <span>葷食</span>
+        </label>
+        <label class="option-chip">
+          <input class="guest-meal-type" name="guest_meal_type_${registrationGuestSequence}" type="radio" value="vegetarian">
+          <span>素食</span>
+        </label>
+      </div>
+    </div>
   `;
 
   row.querySelector(".registration-guest-input").addEventListener("input", syncRegistrationGuestsAndAttendeeCount);
+  row.querySelector(".guest-meal-toggle").addEventListener("change", () => {
+    syncRegistrationGuestMealState(row);
+    syncRegistrationMealSummary();
+  });
+  row.querySelectorAll(".guest-meal-type").forEach((input) => {
+    input.addEventListener("change", syncRegistrationMealSummary);
+  });
   row.querySelector(".guest-remove").addEventListener("click", () => {
     row.remove();
     if (document.querySelectorAll(".registration-guest-input").length === 0) addRegistrationGuestInput("");
@@ -207,13 +242,112 @@ function addRegistrationGuestInput(value) {
 
 function syncRegistrationGuestsAndAttendeeCount() {
   const form = $("#registrationForm");
-  const guests = Array.from(document.querySelectorAll(".registration-guest-input"))
-    .map((input) => input.value.trim())
+  const guestEntries = Array.from(document.querySelectorAll(".registration-guest-entry"));
+  const guests = guestEntries
+    .map((entry) => entry.querySelector(".registration-guest-input").value.trim())
     .filter(Boolean);
 
   form.elements.namedItem("guest_names").value = guests.join("、");
   form.elements.namedItem("attendee_count").value = 1 + guests.length;
   setText("#registrationAttendeeCountHint", `目前報名人數：${1 + guests.length} 人`);
+  guestEntries.forEach((entry) => syncRegistrationGuestMealState(entry));
+  syncRegistrationMealSummary();
+}
+
+function setupRegistrationMealControls() {
+  const inviterMealToggle = $("#inviterMealToggle");
+  const inviterMealType = $("#inviterMealType");
+
+  if (!inviterMealToggle || !inviterMealType) return;
+
+  inviterMealToggle.addEventListener("change", () => {
+    syncDietChoiceGroup(inviterMealType, inviterMealToggle.checked);
+    syncRegistrationMealSummary();
+  });
+  inviterMealType.querySelectorAll('input[type="radio"]').forEach((input) => {
+    input.addEventListener("change", syncRegistrationMealSummary);
+  });
+  syncDietChoiceGroup(inviterMealType, inviterMealToggle.checked);
+  syncRegistrationMealSummary();
+}
+
+function syncRegistrationGuestMealState(entry) {
+  const name = entry.querySelector(".registration-guest-input").value.trim();
+  const panel = entry.querySelector(".guest-meal-panel");
+  const toggle = entry.querySelector(".guest-meal-toggle");
+  const dietChoiceGroup = entry.querySelector(".guest-diet-choice");
+  const hasName = Boolean(name);
+
+  panel.hidden = !hasName;
+  toggle.disabled = !hasName;
+  if (!hasName) toggle.checked = false;
+  syncDietChoiceGroup(dietChoiceGroup, hasName && toggle.checked);
+}
+
+function syncDietChoiceGroup(group, enabled) {
+  group.hidden = !enabled;
+  group.querySelectorAll('input[type="radio"]').forEach((input) => {
+    input.disabled = !enabled;
+    if (!enabled) input.checked = false;
+  });
+}
+
+function syncRegistrationMealSummary() {
+  const hiddenMealRequired = document.querySelector('#registrationForm [name="meal_required"]');
+  const hiddenMeatCount = document.querySelector('#registrationForm [name="meat_meal_count"]');
+  const hiddenVegetarianCount = document.querySelector('#registrationForm [name="vegetarian_meal_count"]');
+  let meatCount = 0;
+  let vegetarianCount = 0;
+
+  if ($("#inviterMealToggle").checked) {
+    const inviterMealType = getCheckedMealType($("#inviterMealType"));
+    if (inviterMealType === "meat") meatCount += 1;
+    if (inviterMealType === "vegetarian") vegetarianCount += 1;
+  }
+
+  document.querySelectorAll(".registration-guest-entry").forEach((entry) => {
+    const input = entry.querySelector(".registration-guest-input");
+    const toggle = entry.querySelector(".guest-meal-toggle");
+    if (!input.value.trim() || !toggle.checked) return;
+
+    const mealType = getCheckedMealType(entry.querySelector(".guest-diet-choice"));
+    if (mealType === "meat") meatCount += 1;
+    if (mealType === "vegetarian") vegetarianCount += 1;
+  });
+
+  hiddenMealRequired.checked = hasAnyMealSelection();
+  hiddenMeatCount.value = meatCount;
+  hiddenVegetarianCount.value = vegetarianCount;
+  setText("#meatMealCountDisplay", String(meatCount));
+  setText("#vegetarianMealCountDisplay", String(vegetarianCount));
+}
+
+function hasAnyMealSelection() {
+  if ($("#inviterMealToggle").checked) return true;
+  return Array.from(document.querySelectorAll(".registration-guest-entry .guest-meal-toggle"))
+    .some((toggle) => !toggle.disabled && toggle.checked);
+}
+
+function getCheckedMealType(container) {
+  const selected = container.querySelector('input[type="radio"]:checked');
+  return selected ? selected.value : "";
+}
+
+function validateRegistrationMealSelections() {
+  if ($("#inviterMealToggle").checked && !getCheckedMealType($("#inviterMealType"))) {
+    return "請為邀請人勾選葷食或素食。";
+  }
+
+  for (const entry of document.querySelectorAll(".registration-guest-entry")) {
+    const name = entry.querySelector(".registration-guest-input").value.trim();
+    const toggle = entry.querySelector(".guest-meal-toggle");
+    if (!name || !toggle.checked) continue;
+    if (!getCheckedMealType(entry.querySelector(".guest-diet-choice"))) {
+      return `請為受邀人「${name}」勾選葷食或素食。`;
+    }
+  }
+
+  return "";
 }
 
 function escapeHtml(value) {

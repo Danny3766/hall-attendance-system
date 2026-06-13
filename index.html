@@ -60,7 +60,7 @@
             <input name="attendee_count" type="hidden" value="1">
             <textarea name="guest_names" hidden></textarea>
 
-            <div class="form-row">
+            <div class="form-row three">
               <label>
                 邀請人
                 <input name="inviter_name" type="text" autocomplete="name" required>
@@ -72,35 +72,40 @@
                   <option value="38 會所">38 會所</option>
                 </select>
               </label>
-            </div>
-
-            <label>
-              區
-              <select name="district" required>
-                <option value="">請選擇區</option>
-              </select>
-            </label>
-
-            <div class="meal-attendee-line">
-              <label class="checkbox-card">
-                <input name="meal_required" type="checkbox">
-                <span>
-                  <strong>需要用餐</strong>
-                  <small>勾選後填寫葷食與素食數量</small>
-                </span>
-              </label>
-            </div>
-
-            <div id="mealFields" class="form-row two meal-fields" hidden>
               <label>
-                葷食數量
-                <input name="meat_meal_count" type="number" min="0" value="0" inputmode="numeric">
-              </label>
-              <label>
-                素食數量
-                <input name="vegetarian_meal_count" type="number" min="0" value="0" inputmode="numeric">
+                區
+                <select name="district" required>
+                  <option value="">請選擇區</option>
+                </select>
               </label>
             </div>
+
+            <input name="meal_required" type="checkbox" hidden>
+            <input name="meat_meal_count" type="number" min="0" value="0" hidden>
+            <input name="vegetarian_meal_count" type="number" min="0" value="0" hidden>
+
+            <section class="meal-selector">
+              <div class="meal-summary-row">
+                <label class="checkbox-card compact-checkbox meal-toggle-card">
+                  <input id="inviterMealToggle" type="checkbox">
+                  <span>
+                    <strong>需要用餐</strong>
+                    <small>勾選後選擇葷食或素食</small>
+                  </span>
+                </label>
+
+                <div id="inviterMealType" class="diet-choice-group" hidden>
+                  <label class="option-chip">
+                    <input name="inviter_meal_type" type="radio" value="meat">
+                    <span>葷食</span>
+                  </label>
+                  <label class="option-chip">
+                    <input name="inviter_meal_type" type="radio" value="vegetarian">
+                    <span>素食</span>
+                  </label>
+                </div>
+              </div>
+            </section>
 
             <section class="guest-editor">
               <div class="guest-editor-heading">
@@ -108,7 +113,13 @@
                 <button id="addRegistrationGuest" class="secondary-button icon-button" type="button" aria-label="新增受邀人">+</button>
               </div>
               <div id="registrationGuestList" class="guest-list"></div>
-              <p id="registrationAttendeeCountHint" class="hint">目前報名人數：1 人</p>
+              <div class="guest-summary-line">
+                <p id="registrationAttendeeCountHint" class="hint">目前報名人數：1 人</p>
+                <div class="meal-count-summary hint" aria-live="polite">
+                  <span class="meal-count-text">葷食 <strong id="meatMealCountDisplay">0</strong> 份</span>
+                  <span class="meal-count-text">素食 <strong id="vegetarianMealCountDisplay">0</strong> 份</span>
+                </div>
+              </div>
             </section>
 
             <label>
@@ -116,7 +127,7 @@
               <textarea name="note" rows="3" placeholder="其他需要服事者知道的事項"></textarea>
             </label>
 
-            <p class="hint">提醒：報名人數會依邀請人與受邀人數量自動計算；若需要用餐，葷食數量 + 素食數量需等於報名人數。</p>
+            <p class="hint">提醒：報名人數會依邀請人與受邀人數量自動計算；餐點數量會依每位勾選的用餐與葷素別自動統計。</p>
             <div id="formMessage" class="message" hidden></div>
             <button id="submitButton" class="primary-button" type="submit">送出報名</button>
           </form>

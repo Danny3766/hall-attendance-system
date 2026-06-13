@@ -25,16 +25,17 @@ function toInt(value) {
 }
 
 function validateRegistrationData(data) {
+  const totalMealCount = data.meat_meal_count + data.vegetarian_meal_count;
   if (!data.inviter_name.trim()) return "請填寫邀請人。";
   if (!data.hall.trim()) return "請填寫會所。";
   if (!data.district.trim()) return "請填寫區。";
   if (data.attendee_count < 1) return "報名人數至少需為 1。";
   if (data.meat_meal_count < 0 || data.vegetarian_meal_count < 0) return "餐點數量不可小於 0。";
-  if (!data.meal_required && data.meat_meal_count + data.vegetarian_meal_count !== 0) {
+  if (!data.meal_required && totalMealCount !== 0) {
     return "若不需要用餐，葷食與素食數量需為 0。";
   }
-  if (data.meal_required && data.meat_meal_count + data.vegetarian_meal_count !== data.attendee_count) {
-    return "葷食數量加素食數量必須等於報名人數。";
+  if (data.meal_required && totalMealCount < 1) {
+    return "若需要用餐，請至少勾選 1 份葷食或素食。";
   }
   return "";
 }
