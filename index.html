@@ -57,6 +57,8 @@
 
           <form id="registrationForm" class="app-form">
             <input id="meeting_id" name="meeting_id" type="hidden" required>
+            <input name="attendee_count" type="hidden" value="1">
+            <textarea name="guest_names" hidden></textarea>
 
             <div class="form-row">
               <label>
@@ -87,13 +89,6 @@
                   <small>勾選後填寫葷食與素食數量</small>
                 </span>
               </label>
-
-              <div class="attendee-row">
-                <label>
-                  報名人數
-                  <input name="attendee_count" type="number" min="1" value="1" inputmode="numeric" required>
-                </label>
-              </div>
             </div>
 
             <div id="mealFields" class="form-row two meal-fields" hidden>
@@ -107,17 +102,21 @@
               </label>
             </div>
 
-            <label>
-              受邀人姓名
-              <textarea name="guest_names" rows="3" placeholder="例如：王弟兄、陳姊妹。若尚未確定可先留空。"></textarea>
-            </label>
+            <section class="guest-editor">
+              <div class="guest-editor-heading">
+                <label>受邀人</label>
+                <button id="addRegistrationGuest" class="secondary-button icon-button" type="button" aria-label="新增受邀人">+</button>
+              </div>
+              <div id="registrationGuestList" class="guest-list"></div>
+              <p id="registrationAttendeeCountHint" class="hint">目前報名人數：1 人</p>
+            </section>
 
             <label>
               備註
               <textarea name="note" rows="3" placeholder="其他需要服事者知道的事項"></textarea>
             </label>
 
-            <p class="hint">提醒：若需要用餐，葷食數量 + 素食數量需等於報名人數。</p>
+            <p class="hint">提醒：報名人數會依邀請人與受邀人數量自動計算；若需要用餐，葷食數量 + 素食數量需等於報名人數。</p>
             <div id="formMessage" class="message" hidden></div>
             <button id="submitButton" class="primary-button" type="submit">送出報名</button>
           </form>
@@ -131,6 +130,6 @@
     <script src="js/config.js?v=20260611-2"></script>
     <script src="js/supabaseClient.js?v=20260611-3"></script>
     <script src="js/utils.js?v=20260613-1"></script>
-    <script src="js/register.js?v=20260611-8"></script>
+    <script src="js/register.js?v=20260611-9"></script>
   </body>
 </html>

@@ -3,34 +3,96 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>前往報名確認頁</title>
+    <title>修改報名資料</title>
     <link rel="stylesheet" href="css/styles.css">
   </head>
   <body>
-    <main class="page-shell narrow">
+    <main class="page-shell">
       <section class="soft-card success-card">
-        <p class="eyebrow">Redirecting</p>
-        <h1>前往報名確認頁</h1>
-        <p class="hero-text">系統已更新修改流程，正在帶您前往報名確認頁。</p>
-        <div id="redirectMessage" class="message info">請稍候...</div>
-        <div class="button-row">
-          <a id="manualRedirect" class="primary-button" href="success.html">前往報名確認頁</a>
-          <a class="ghost-link" href="index.html">回到報名頁</a>
-        </div>
+        <p class="eyebrow">Edit Registration</p>
+        <h1>修改報名資料</h1>
+        <p class="hero-text">請調整需要修改的欄位，送出後會更新這筆報名資料。</p>
+
+        <div id="editMessage" class="message" tabindex="-1" hidden></div>
+
+        <section id="editPanel" class="confirm-panel">
+          <aside id="meetingSummary" class="meeting-confirm-card"></aside>
+
+          <form id="editForm" class="app-form confirm-form">
+            <input name="attendee_count" type="hidden" value="1">
+            <textarea name="guest_names" hidden></textarea>
+
+            <div class="form-row three">
+              <label>
+                邀請人
+                <input name="inviter_name" type="text" autocomplete="name" required>
+              </label>
+              <label>
+                會所
+                <select name="hall" required>
+                  <option value="">請選擇會所</option>
+                  <option value="38 會所">38 會所</option>
+                </select>
+              </label>
+              <label>
+                區
+                <select name="district" required>
+                  <option value="">請選擇區</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="meal-attendee-line meal-attendee-inline">
+              <label class="checkbox-card">
+                <input name="meal_required" type="checkbox">
+                <span>
+                  <strong>需要用餐</strong>
+                  <small>勾選後填寫葷食與素食數量</small>
+                </span>
+              </label>
+              <div id="mealFields" class="meal-fields meal-fields-inline" hidden>
+                <label>
+                  葷食數量
+                  <input name="meat_meal_count" type="number" min="0" inputmode="numeric">
+                </label>
+                <label>
+                  素食數量
+                  <input name="vegetarian_meal_count" type="number" min="0" inputmode="numeric">
+                </label>
+              </div>
+            </div>
+
+            <section class="guest-editor">
+              <div class="guest-editor-heading">
+                <label>受邀人</label>
+                <button id="addGuest" class="secondary-button icon-button" type="button" aria-label="新增受邀人">+</button>
+              </div>
+              <div id="guestList" class="guest-list"></div>
+              <p id="attendeeCountHint" class="hint">目前報名人數：1 人</p>
+            </section>
+
+            <label>
+              備註
+              <textarea name="note" rows="3"></textarea>
+            </label>
+
+            <p class="hint">提醒：報名人數會依邀請人與受邀人數量自動計算；若需要用餐，葷食數量 + 素食數量需等於報名人數。</p>
+
+            <div class="button-row confirm-actions">
+              <button id="backToSuccess" class="secondary-button" type="button">返回報名完成頁</button>
+              <button id="saveButton" class="primary-button" type="submit">修改送出</button>
+            </div>
+          </form>
+        </section>
       </section>
     </main>
 
-    <script>
-      const params = new URLSearchParams(window.location.search);
-      const target = new URL("success.html", window.location.href);
-      const id = params.get("id");
-      const token = params.get("token");
-
-      if (id) target.searchParams.set("id", id);
-      if (token) target.searchParams.set("token", token);
-
-      document.getElementById("manualRedirect").href = target.toString();
-      window.location.replace(target.toString());
-    </script>
+    <script src="js/locationOptions.js?v=20260611-5"></script>
+    <script src="js/mealToggle.js?v=20260611-1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js?v=20260611-2"></script>
+    <script src="js/supabaseClient.js?v=20260611-3"></script>
+    <script src="js/utils.js?v=20260613-1"></script>
+    <script src="js/edit.js?v=20260613-2"></script>
   </body>
 </html>

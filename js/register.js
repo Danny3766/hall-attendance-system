@@ -6,6 +6,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const form = $("#registrationForm");
   const lookupForm = $("#lookupForm");
   window.setupLocationOptions(lookupForm);
+  $("#addRegistrationGuest").addEventListener("click", () => addRegistrationGuestInput(""));
+  addRegistrationGuestInput("");
   await loadOpenMeetings();
   form.addEventListener("submit", handleSubmit);
   lookupForm.addEventListener("submit", handleLookupSubmit);
@@ -92,6 +94,7 @@ function renderMeetingSummary(meeting) {
 async function handleSubmit(event) {
   event.preventDefault();
   const form = event.currentTarget;
+  syncRegistrationGuestsAndAttendeeCount();
   const payload = collectRegistrationForm(form);
   payload.meeting_id = form.elements.namedItem("meeting_id").value;
   payload.edit_token = crypto.randomUUID();
@@ -181,4 +184,42 @@ async function handleLookupSubmit(event) {
 function resetLookupButton() {
   $("#lookupButton").disabled = false;
   $("#lookupButton").textContent = "查詢報名";
+}
+
+function addRegistrationGuestInput(value) {
+  const row = document.createElement("div");
+  row.className = "guest-row";
+  row.innerHTML = `
+    <input class="registration-guest-input" type="text" value="${escapeHtml(value)}" placeholder="請輸入受邀人姓名">
+    <button class="ghost-button guest-remove" type="button">移除</button>
+  `;
+
+  row.querySelector(".registration-guest-input").addEventListener("input", syncRegistrationGuestsAndAttendeeCount);
+  row.querySelector(".guest-remove").addEventListener("click", () => {
+    row.remove();
+    if (document.querySelectorAll(".registration-guest-input").length === 0) addRegistrationGuestInput("");
+    syncRegistrationGuestsAndAttendeeCount();
+  });
+
+  $("#registrationGuestList").appendChild(row);
+  syncRegistrationGuestsAndAttendeeCount();
+}
+
+function syncRegistrationGuestsAndAttendeeCount() {
+  const form = $("#registrationForm");
+  const guests = Array.from(document.querySelectorAll(".registration-guest-input"))
+    .map((input) => input.value.trim())
+    .filter(Boolean);
+
+  form.elements.namedItem("guest_names").value = guests.join("、");
+  form.elements.namedItem("attendee_count").value = 1 + guests.length;
+  setText("#registrationAttendeeCountHint", `目前報名人數：${1 + guests.length} 人`);
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }

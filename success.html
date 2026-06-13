@@ -11,91 +11,38 @@
       <section class="soft-card success-card">
         <p class="eyebrow">Registration Complete</p>
         <h1 id="successTitle">報名完成</h1>
-        <p id="successDescription" class="hero-text">請確認以下報名資料是否正確；若需要調整，可直接修改後送出。</p>
+        <p id="successDescription" class="hero-text">請確認以下報名資料是否正確；若需要調整，請前往修改報名資料頁。</p>
 
         <div id="successMessage" class="message" hidden></div>
-        <div id="successToast" class="success-toast" hidden>報名資料已成功修改並送出。</div>
 
         <section id="registrationConfirmPanel" class="confirm-panel" hidden>
           <aside id="confirmMeetingSummary" class="meeting-confirm-card"></aside>
 
-          <form id="confirmForm" class="app-form confirm-form">
-            <input name="attendee_count" type="hidden" value="1">
-            <textarea name="guest_names" hidden></textarea>
+          <div class="confirm-details" aria-label="報名資料">
+            <dl class="detail-list">
+              <div class="identity-detail"><dt>邀請人</dt><dd id="confirmInviterName"></dd></div>
+              <div class="identity-detail"><dt>會所</dt><dd id="confirmHall"></dd></div>
+              <div class="identity-detail"><dt>區</dt><dd id="confirmDistrict"></dd></div>
+              <div class="meal-detail"><dt>是否用餐</dt><dd id="confirmMealRequired"></dd></div>
+              <div class="meal-detail meal-count-detail"><dt>餐點數量</dt><dd id="confirmMealCounts"></dd></div>
+              <div class="count-detail"><dt>報名總人數</dt><dd id="confirmAttendeeCount"></dd></div>
+              <div class="guest-detail"><dt>受邀人</dt><dd id="confirmGuestNames"></dd></div>
+              <div class="wide-detail"><dt>備註</dt><dd id="confirmNote"></dd></div>
+            </dl>
+          </div>
 
-            <div class="form-row">
-              <label>
-                邀請人
-                <input name="inviter_name" type="text" autocomplete="name" required>
-              </label>
-              <label>
-                會所
-                <select name="hall" required>
-                  <option value="">請選擇會所</option>
-                  <option value="38 會所">38 會所</option>
-                </select>
-              </label>
-            </div>
-
-            <label>
-              區
-              <select name="district" required>
-                <option value="">請選擇區</option>
-              </select>
-            </label>
-
-            <div class="meal-attendee-line">
-              <label class="checkbox-card">
-                <input name="meal_required" type="checkbox">
-                <span>
-                  <strong>需要用餐</strong>
-                  <small>勾選後填寫葷食與素食數量</small>
-                </span>
-              </label>
-            </div>
-
-            <div id="mealFields" class="form-row two meal-fields" hidden>
-              <label>
-                葷食數量
-                <input name="meat_meal_count" type="number" min="0" inputmode="numeric">
-              </label>
-              <label>
-                素食數量
-                <input name="vegetarian_meal_count" type="number" min="0" inputmode="numeric">
-              </label>
-            </div>
-
-            <section class="guest-editor">
-              <div class="guest-editor-heading">
-                <label>受邀人</label>
-                <button id="addGuest" class="secondary-button icon-button" type="button" aria-label="新增受邀人">+</button>
-              </div>
-              <div id="guestList" class="guest-list"></div>
-              <p id="attendeeCountHint" class="hint">目前報名人數：1 人</p>
-            </section>
-
-            <label>
-              備註
-              <textarea name="note" rows="3"></textarea>
-            </label>
-
-            <p class="hint">提醒：報名人數會依邀請人與受邀人數量自動計算；若需要用餐，葷食數量 + 素食數量需等於報名人數。</p>
-
-            <div class="button-row confirm-actions">
-              <button id="confirmBackHome" class="secondary-button" type="button">確認無誤，回報名首頁</button>
-              <button id="updateFromSuccess" class="primary-button" type="submit">修改送出</button>
-            </div>
-          </form>
+          <div class="button-row confirm-actions">
+            <button id="confirmBackHome" class="secondary-button" type="button">確認無誤，回報名首頁</button>
+            <button id="editRegistration" class="primary-button" type="button">修改報名資料</button>
+          </div>
         </section>
       </section>
     </main>
 
-    <script src="js/locationOptions.js?v=20260611-5"></script>
-    <script src="js/mealToggle.js?v=20260611-1"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js?v=20260611-2"></script>
     <script src="js/supabaseClient.js?v=20260611-3"></script>
     <script src="js/utils.js?v=20260613-1"></script>
-    <script src="js/success.js?v=20260611-4"></script>
+    <script src="js/success.js?v=20260613-2"></script>
   </body>
 </html>
