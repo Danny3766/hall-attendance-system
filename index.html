@@ -12,7 +12,7 @@
         <div>
           <p class="eyebrow">Meeting Registration</p>
           <h1>聚會報名</h1>
-          <p class="hero-text">歡迎弟兄姊妹一同有分聚集。請填寫報名資料，若之後受邀人確定出席，可用修改連結回來調整。</p>
+          <p class="hero-text">歡迎弟兄姊妹一同有分聚集。請填寫報名資料；若之後需要調整，可回到本頁查詢既有報名並修改。</p>
         </div>
       </section>
 
@@ -26,6 +26,34 @@
             <p class="eyebrow">Register</p>
             <h2>填寫報名資料</h2>
           </div>
+
+          <section class="lookup-card">
+            <div>
+              <h3>已報名過？</h3>
+              <p>輸入邀請人、會所與區，若已有報名資料，可直接前往修改。</p>
+            </div>
+            <form id="lookupForm" class="lookup-form">
+              <label>
+                邀請人
+                <input name="inviter_name" type="text" autocomplete="name" required>
+              </label>
+              <label>
+                會所
+                <select name="hall" required>
+                  <option value="">請選擇會所</option>
+                  <option value="38 會所">38 會所</option>
+                </select>
+              </label>
+              <label>
+                區
+                <select name="district" required>
+                  <option value="">請選擇區</option>
+                </select>
+              </label>
+              <button id="lookupButton" class="secondary-button" type="submit">查詢報名</button>
+            </form>
+            <div id="lookupMessage" class="message" hidden></div>
+          </section>
 
           <form id="registrationForm" class="app-form">
             <input id="meeting_id" name="meeting_id" type="hidden" required>
@@ -103,6 +131,6 @@
     <script src="js/config.js?v=20260611-2"></script>
     <script src="js/supabaseClient.js?v=20260611-3"></script>
     <script src="js/utils.js?v=20260611-3"></script>
-    <script src="js/register.js?v=20260611-6"></script>
+    <script src="js/register.js?v=20260611-8"></script>
   </body>
 </html>

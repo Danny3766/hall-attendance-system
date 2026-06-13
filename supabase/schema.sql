@@ -273,3 +273,30 @@ begin
   return created_profile;
 end;
 $$;
+
+create or replace function find_registration_for_success(
+  search_meeting_id uuid,
+  search_inviter_name text,
+  search_hall text,
+  search_district text
+)
+returns jsonb
+language sql
+security definer
+set search_path = public
+as $$
+  select jsonb_build_object(
+    'id', r.id,
+    'edit_token', r.edit_token
+  )
+  from registrations r
+  join meetings m on m.id = r.meeting_id
+  where r.meeting_id = search_meeting_id
+    and m.is_open = true
+    and (m.registration_deadline is null or m.registration_deadline > now())
+    and lower(trim(r.inviter_name)) = lower(trim(search_inviter_name))
+    and trim(r.hall) = trim(search_hall)
+    and trim(r.district) = trim(search_district)
+  order by r.updated_at desc, r.created_at desc
+  limit 1;
+$$;

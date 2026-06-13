@@ -4,8 +4,11 @@ let openMeetings = [];
 
 document.addEventListener("DOMContentLoaded", async () => {
   const form = $("#registrationForm");
+  const lookupForm = $("#lookupForm");
+  window.setupLocationOptions(lookupForm);
   await loadOpenMeetings();
   form.addEventListener("submit", handleSubmit);
+  lookupForm.addEventListener("submit", handleLookupSubmit);
 });
 
 async function loadOpenMeetings() {
@@ -131,5 +134,51 @@ async function handleSubmit(event) {
     return;
   }
 
-  window.location.href = `success.html?id=${encodeURIComponent(data.id)}&token=${encodeURIComponent(data.edit_token)}`;
+  window.location.replace(`success.html?id=${encodeURIComponent(data.id)}&token=${encodeURIComponent(data.edit_token)}`);
+}
+
+async function handleLookupSubmit(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const payload = {
+    search_meeting_id: selectedMeeting?.id || null,
+    search_inviter_name: form.elements.namedItem("inviter_name").value.trim(),
+    search_hall: form.elements.namedItem("hall").value.trim(),
+    search_district: form.elements.namedItem("district").value.trim(),
+  };
+
+  if (!payload.search_meeting_id) {
+    showMessage("#lookupMessage", "請先選擇要查詢的聚會。", "error");
+    return;
+  }
+
+  if (!payload.search_inviter_name || !payload.search_hall || !payload.search_district) {
+    showMessage("#lookupMessage", "請填寫邀請人、會所與區。", "error");
+    return;
+  }
+
+  $("#lookupButton").disabled = true;
+  $("#lookupButton").textContent = "查詢中...";
+  showMessage("#lookupMessage", "正在查詢既有報名...", "info");
+
+  const { data, error } = await db.rpc("find_registration_for_success", payload);
+
+  if (error) {
+    showMessage("#lookupMessage", `查詢失敗：${error.message}`, "error");
+    resetLookupButton();
+    return;
+  }
+
+  if (!data) {
+    showMessage("#lookupMessage", "找不到符合的報名資料，請確認輸入是否正確。", "error");
+    resetLookupButton();
+    return;
+  }
+
+  window.location.replace(`success.html?id=${encodeURIComponent(data.id)}&token=${encodeURIComponent(data.edit_token)}`);
+}
+
+function resetLookupButton() {
+  $("#lookupButton").disabled = false;
+  $("#lookupButton").textContent = "查詢報名";
 }
