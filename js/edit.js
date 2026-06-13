@@ -24,8 +24,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  await loadRegistration();
   form.addEventListener("submit", handleUpdate);
+  await loadRegistration();
 });
 
 async function loadRegistration() {
@@ -52,6 +52,7 @@ async function loadRegistration() {
     return;
   }
 
+  $("#saveButton").disabled = false;
   showEditMessage("", "info");
 }
 

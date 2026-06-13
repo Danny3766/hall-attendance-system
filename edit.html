@@ -18,7 +18,7 @@
         <section id="editPanel" class="confirm-panel">
           <aside id="meetingSummary" class="meeting-confirm-card"></aside>
 
-          <form id="editForm" class="app-form confirm-form">
+          <form id="editForm" class="app-form confirm-form" novalidate>
             <input name="attendee_count" type="hidden" value="1">
             <textarea name="guest_names" hidden></textarea>
 
@@ -80,7 +80,7 @@
 
             <div class="button-row confirm-actions">
               <button id="backToSuccess" class="secondary-button" type="button">返回報名完成頁</button>
-              <button id="saveButton" class="primary-button" type="submit">修改送出</button>
+              <button id="saveButton" class="primary-button" type="submit" disabled>修改送出</button>
             </div>
           </form>
         </section>
@@ -93,6 +93,6 @@
     <script src="js/config.js?v=20260611-2"></script>
     <script src="js/supabaseClient.js?v=20260611-3"></script>
     <script src="js/utils.js?v=20260613-1"></script>
-    <script src="js/edit.js?v=20260613-2"></script>
+    <script src="js/edit.js?v=20260613-3"></script>
   </body>
 </html>

@@ -8,7 +8,7 @@ function getQueryParam(name) {
 
 function setText(selector, value) {
   const element = $(selector);
-  if (element) element.textContent = value || "";
+  if (element) element.textContent = value == null ? "" : String(value);
 }
 
 function showMessage(selector, message, type) {
