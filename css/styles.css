@@ -419,7 +419,8 @@ select:disabled {
 
 .primary-button,
 .secondary-button,
-.ghost-button {
+.ghost-button,
+.danger-button {
   min-height: 48px;
   border: 0;
   border-radius: 999px;
@@ -448,8 +449,16 @@ select:disabled {
   border: 1px solid var(--line);
 }
 
+.danger-button {
+  color: #fff;
+  background: linear-gradient(135deg, #b75a4d, var(--danger));
+  box-shadow: 0 14px 28px rgba(163, 63, 50, 0.18);
+}
+
 .primary-button:disabled,
-.secondary-button:disabled {
+.secondary-button:disabled,
+.ghost-button:disabled,
+.danger-button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
 }
@@ -644,15 +653,108 @@ select:disabled {
 
 .narrow-card { max-width: 520px; margin: 0 auto; }
 
+.registration-filter-card {
+  padding: 22px;
+  margin: 14px 0 18px;
+}
+
+.filter-heading {
+  margin-bottom: 0;
+}
+
+.registration-filters-body {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.registration-filters-body[hidden] {
+  display: none;
+}
+
+.registration-filters-body .stats-grid {
+  margin-bottom: 0;
+}
+
 .toolbar {
   display: grid;
   gap: 14px;
-  margin: 14px 0 18px;
+  margin: 0;
 }
 
 .meeting-management-card {
   padding: 22px;
   margin: 14px 0 18px;
+}
+
+.meeting-management-body {
+  display: grid;
+  gap: 16px;
+}
+
+.meeting-management-body[hidden] {
+  display: none;
+}
+
+.meeting-dashboard {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.meeting-dashboard-card {
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(255, 248, 232, 0.82);
+  overflow: hidden;
+}
+
+.meeting-dashboard-card.open {
+  background: #edf5e6;
+}
+
+.meeting-dashboard-card.closed {
+  background: rgba(245, 241, 232, 0.9);
+}
+
+.meeting-dashboard-card.selected {
+  padding: 16px;
+  background: #fbf0d4;
+}
+
+.meeting-dashboard-filter {
+  width: 100%;
+  min-height: 100%;
+  padding: 16px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.meeting-dashboard-filter.active {
+  box-shadow: inset 0 0 0 2px var(--primary);
+}
+
+.meeting-dashboard-filter:focus-visible {
+  outline: 3px solid rgba(211, 143, 52, 0.34);
+  outline-offset: -3px;
+}
+
+.meeting-dashboard-card span,
+.meeting-dashboard-filter span {
+  display: block;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.meeting-dashboard-card strong,
+.meeting-dashboard-filter strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 1.8rem;
 }
 
 .section-description {
@@ -666,6 +768,39 @@ select:disabled {
   grid-template-columns: 1fr;
   gap: 10px;
   width: 100%;
+}
+
+.meeting-body-actions {
+  margin-bottom: 2px;
+}
+
+.meeting-bulk-toolbar {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.select-all-row,
+.meeting-select-row {
+  display: flex;
+  grid-template-columns: none;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 900;
+}
+
+.select-all-row input,
+.meeting-select-row input {
+  width: 20px;
+  min-height: 20px;
+  accent-color: var(--primary);
 }
 
 .meeting-form-panel {
@@ -694,6 +829,24 @@ select:disabled {
 .meeting-list {
   display: grid;
   gap: 12px;
+}
+
+.pagination-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.pagination-controls[hidden] {
+  display: none;
+}
+
+.pagination-controls span {
+  color: var(--muted);
+  font-weight: 900;
 }
 
 .meeting-admin-card {
@@ -858,6 +1011,8 @@ th {
   .form-row.three { grid-template-columns: repeat(3, 1fr); }
   .lookup-form { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; }
   .lookup-form .secondary-button { grid-column: 1 / -1; }
+  .meeting-dashboard { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .meeting-bulk-toolbar { grid-template-columns: 1fr auto auto auto; }
   .meal-summary-row { grid-template-columns: minmax(220px, 0.9fr) minmax(220px, 1fr); }
   .meal-attendee-line { grid-template-columns: 1fr minmax(190px, 0.42fr); }
   .meal-attendee-line.meal-attendee-inline {
@@ -900,14 +1055,15 @@ th {
   .form-card,
   .success-card,
   .table-card,
-  .toolbar { padding: 30px; }
+  .registration-filter-card { padding: 30px; }
   .lookup-form { grid-template-columns: 1fr 0.9fr 0.9fr auto; }
   .lookup-form .secondary-button { grid-column: auto; }
   .toolbar { grid-template-columns: minmax(280px, 420px) 1fr; align-items: end; }
   .toolbar-actions { display: flex; justify-content: flex-end; }
-  .meeting-admin-card { grid-template-columns: 1fr auto auto; align-items: center; }
+  .meeting-admin-card { grid-template-columns: 1fr auto auto auto; align-items: center; }
   .meeting-admin-card .meeting-toggle,
-  .meeting-admin-card .meeting-edit { width: auto; }
+  .meeting-admin-card .meeting-edit,
+  .meeting-admin-card .meeting-delete { width: auto; }
   .mobile-list { display: none; }
   .table-wrap { display: block; }
 }

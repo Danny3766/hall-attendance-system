@@ -1,15 +1,33 @@
 const db = window.supabaseClient;
 let registrations = [];
 let meetings = [];
+let meetingsPage = 1;
+let registrationsPage = 1;
+let meetingStatusFilter = "all";
+let selectedMeetingIds = new Set();
+const MEETINGS_PAGE_SIZE = 5;
+const REGISTRATIONS_PAGE_SIZE = 20;
 
 document.addEventListener("DOMContentLoaded", async () => {
   $("#loginForm").addEventListener("submit", handleLogin);
+  $("#toggleRegistrationFilters").addEventListener("click", toggleRegistrationFilters);
+  $("#toggleMeetingManagement").addEventListener("click", toggleMeetingManagement);
   $("#showMeetingForm").addEventListener("click", showCreateMeetingForm);
+  document.querySelectorAll("[data-meeting-status-filter]").forEach((button) => {
+    button.addEventListener("click", () => setMeetingStatusFilter(button.dataset.meetingStatusFilter));
+  });
+  $("#selectPageMeetings").addEventListener("change", handleSelectPageMeetings);
+  $("#bulkOpenMeetings").addEventListener("click", () => bulkUpdateMeetingOpen(true));
+  $("#bulkCloseMeetings").addEventListener("click", () => bulkUpdateMeetingOpen(false));
+  $("#bulkDeleteMeetings").addEventListener("click", bulkDeleteMeetings);
   $("#meetingForm").addEventListener("submit", handleCreateMeeting);
   $("#cancelMeetingEdit").addEventListener("click", resetMeetingForm);
   $("#refreshMeetings").addEventListener("click", loadMeetings);
   $("#logoutButton").addEventListener("click", handleLogout);
-  $("#meetingFilter").addEventListener("change", loadRegistrations);
+  $("#meetingFilter").addEventListener("change", () => {
+    registrationsPage = 1;
+    loadRegistrations();
+  });
   $("#exportCsv").addEventListener("click", exportCsv);
 
   const { data } = await db.auth.getSession();
@@ -90,7 +108,17 @@ function showAdmin() {
   $("#adminPanel").hidden = false;
 }
 
+function toggleRegistrationFilters() {
+  const body = $("#registrationFiltersBody");
+  const button = $("#toggleRegistrationFilters");
+  const isExpanded = body.hidden;
+  body.hidden = !isExpanded;
+  button.setAttribute("aria-expanded", String(isExpanded));
+  button.textContent = isExpanded ? "收合報名資料" : "展開報名資料";
+}
+
 async function loadMeetings() {
+  const selectedMeetingId = $("#meetingFilter")?.value || "";
   const { data, error } = await db
     .from("meetings")
     .select("id,title,description,meeting_date,location,registration_deadline,is_open")
@@ -103,15 +131,23 @@ async function loadMeetings() {
 
   meetings = data || [];
   meetings.sort((a, b) => Number(b.is_open) - Number(a.is_open) || new Date(b.meeting_date) - new Date(a.meeting_date));
+  selectedMeetingIds = new Set([...selectedMeetingIds].filter((id) => meetings.some((meeting) => meeting.id === id)));
+  normalizeMeetingsPage();
   renderMeetingList();
   const filter = $("#meetingFilter");
-  filter.innerHTML = '<option value="">全部聚會</option>';
+  filter.innerHTML = "";
   meetings.forEach((meeting) => {
     const option = document.createElement("option");
     option.value = meeting.id;
     option.textContent = `${meeting.title}｜${formatDateTime(meeting.meeting_date)}`;
     filter.appendChild(option);
   });
+
+  if (selectedMeetingId && meetings.some((meeting) => meeting.id === selectedMeetingId)) {
+    filter.value = selectedMeetingId;
+  } else if (meetings[0]) {
+    filter.value = meetings[0].id;
+  }
 }
 
 async function handleCreateMeeting(event) {
@@ -195,6 +231,7 @@ function resetMeetingForm(options = {}) {
 }
 
 function showCreateMeetingForm() {
+  setMeetingManagementExpanded(true);
   resetMeetingForm();
   showMessage("#meetingStatusMessage", "", "info");
   $("#meetingFormPanel").hidden = false;
@@ -207,17 +244,40 @@ function showCreateMeetingForm() {
 function renderMeetingList() {
   const list = $("#meetingCards");
   list.innerHTML = "";
+  normalizeMeetingsPage();
+  renderMeetingDashboard();
+  renderMeetingPagination();
+  const visibleMeetings = getFilteredMeetings();
 
   if (meetings.length === 0) {
     list.innerHTML = '<p class="empty-state">目前尚未建立聚會。</p>';
     return;
   }
 
-  meetings.forEach((meeting) => {
+  if (visibleMeetings.length === 0) {
+    list.innerHTML = `<p class="empty-state">目前沒有${meetingStatusFilter === "open" ? "開放報名" : "關閉報名"}的聚會。</p>`;
+    syncPageSelectionCheckbox([]);
+    return;
+  }
+
+  let pageStart = (meetingsPage - 1) * MEETINGS_PAGE_SIZE;
+  let pageMeetings = visibleMeetings.slice(pageStart, pageStart + MEETINGS_PAGE_SIZE);
+  if (pageMeetings.length === 0 && visibleMeetings.length > 0) {
+    meetingsPage = 1;
+    pageStart = 0;
+    pageMeetings = visibleMeetings.slice(0, MEETINGS_PAGE_SIZE);
+    renderMeetingPagination();
+  }
+
+  pageMeetings.forEach((meeting) => {
     const card = document.createElement("article");
     card.className = "meeting-admin-card";
     card.innerHTML = `
       <div>
+        <label class="meeting-select-row">
+          <input class="meeting-select" type="checkbox" value="${meeting.id}" ${selectedMeetingIds.has(meeting.id) ? "checked" : ""}>
+          選取聚會
+        </label>
         <span class="status-pill ${meeting.is_open ? "open" : "closed"}">${meeting.is_open ? "開放中" : "已關閉"}</span>
         <h3>${meeting.title}</h3>
         <p>${meeting.description || "無說明"}</p>
@@ -231,8 +291,13 @@ function renderMeetingList() {
         ${meeting.is_open ? "關閉報名" : "開放報名"}
       </button>
       <button class="ghost-button meeting-edit" type="button" data-id="${meeting.id}">編輯</button>
+      <button class="danger-button meeting-delete" type="button" data-id="${meeting.id}">移除</button>
     `;
     list.appendChild(card);
+  });
+
+  list.querySelectorAll(".meeting-select").forEach((input) => {
+    input.addEventListener("change", () => toggleMeetingSelection(input.value, input.checked));
   });
 
   list.querySelectorAll(".meeting-toggle").forEach((button) => {
@@ -242,9 +307,189 @@ function renderMeetingList() {
   list.querySelectorAll(".meeting-edit").forEach((button) => {
     button.addEventListener("click", () => startEditMeeting(button.dataset.id));
   });
+
+  list.querySelectorAll(".meeting-delete").forEach((button) => {
+    button.addEventListener("click", () => deleteMeeting(button.dataset.id));
+  });
+
+  syncPageSelectionCheckbox(pageMeetings);
+}
+
+function toggleMeetingManagement() {
+  setMeetingManagementExpanded($("#meetingManagementBody").hidden);
+}
+
+function renderMeetingDashboard() {
+  const openCount = meetings.filter((meeting) => meeting.is_open).length;
+  setText("#meetingTotalCount", meetings.length);
+  setText("#meetingOpenCount", openCount);
+  setText("#meetingClosedCount", meetings.length - openCount);
+  setText("#meetingSelectedCount", selectedMeetingIds.size);
+  syncMeetingDashboardFilterButtons();
+  syncBulkMeetingButtons();
+}
+
+function setMeetingStatusFilter(filter) {
+  meetingStatusFilter = ["all", "open", "closed"].includes(filter) ? filter : "all";
+  meetingsPage = 1;
+  renderMeetingList();
+}
+
+function syncMeetingDashboardFilterButtons() {
+  document.querySelectorAll("[data-meeting-status-filter]").forEach((button) => {
+    const isActive = button.dataset.meetingStatusFilter === meetingStatusFilter;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
+}
+
+function toggleMeetingSelection(meetingId, isSelected) {
+  if (isSelected) {
+    selectedMeetingIds.add(meetingId);
+  } else {
+    selectedMeetingIds.delete(meetingId);
+  }
+  renderMeetingDashboard();
+  syncPageSelectionCheckbox(getCurrentPageMeetings());
+}
+
+function handleSelectPageMeetings(event) {
+  const isChecked = event.currentTarget.checked;
+  getCurrentPageMeetings().forEach((meeting) => {
+    if (isChecked) {
+      selectedMeetingIds.add(meeting.id);
+    } else {
+      selectedMeetingIds.delete(meeting.id);
+    }
+  });
+  renderMeetingList();
+}
+
+function getCurrentPageMeetings() {
+  const pageStart = (meetingsPage - 1) * MEETINGS_PAGE_SIZE;
+  return getFilteredMeetings().slice(pageStart, pageStart + MEETINGS_PAGE_SIZE);
+}
+
+function getFilteredMeetings() {
+  if (meetingStatusFilter === "open") return meetings.filter((meeting) => meeting.is_open);
+  if (meetingStatusFilter === "closed") return meetings.filter((meeting) => !meeting.is_open);
+  return meetings;
+}
+
+function syncPageSelectionCheckbox(pageMeetings) {
+  const checkbox = $("#selectPageMeetings");
+  if (!checkbox) return;
+
+  const selectableCount = pageMeetings.length;
+  const selectedCount = pageMeetings.filter((meeting) => selectedMeetingIds.has(meeting.id)).length;
+  checkbox.checked = selectableCount > 0 && selectedCount === selectableCount;
+  checkbox.indeterminate = selectedCount > 0 && selectedCount < selectableCount;
+  checkbox.disabled = selectableCount === 0;
+}
+
+function syncBulkMeetingButtons() {
+  const disabled = selectedMeetingIds.size === 0;
+  $("#bulkOpenMeetings").disabled = disabled;
+  $("#bulkCloseMeetings").disabled = disabled;
+  $("#bulkDeleteMeetings").disabled = disabled;
+}
+
+async function bulkUpdateMeetingOpen(isOpen) {
+  const ids = [...selectedMeetingIds];
+  if (ids.length === 0) return;
+
+  showMessage("#meetingStatusMessage", `正在${isOpen ? "開放" : "關閉"} ${ids.length} 個聚會...`, "info");
+  const { error } = await db.from("meetings").update({ is_open: isOpen }).in("id", ids);
+
+  if (error) {
+    showMessage("#meetingStatusMessage", `批次更新聚會失敗：${error.message}`, "error");
+    return;
+  }
+
+  selectedMeetingIds.clear();
+  await loadMeetings();
+  await loadRegistrations();
+  showMessage("#meetingStatusMessage", `已${isOpen ? "開放" : "關閉"} ${ids.length} 個聚會。`, "success");
+}
+
+async function bulkDeleteMeetings() {
+  const ids = [...selectedMeetingIds];
+  if (ids.length === 0) return;
+  if (!window.confirm(`確定要移除 ${ids.length} 個聚會？相關報名資料也會一併移除。`)) return;
+
+  await deleteMeetings(ids, `已移除 ${ids.length} 個聚會。`);
+}
+
+async function deleteMeeting(meetingId) {
+  const meeting = meetings.find((item) => item.id === meetingId);
+  const label = meeting?.title || "這個聚會";
+  if (!window.confirm(`確定要移除「${label}」？相關報名資料也會一併移除。`)) return;
+
+  await deleteMeetings([meetingId], "聚會已移除。");
+}
+
+async function deleteMeetings(ids, successMessage) {
+  showMessage("#meetingStatusMessage", "正在移除聚會...", "info");
+
+  const { error } = await db.from("meetings").delete().in("id", ids);
+  if (error) {
+    showMessage("#meetingStatusMessage", `移除聚會失敗：${error.message}`, "error");
+    return;
+  }
+
+  ids.forEach((id) => selectedMeetingIds.delete(id));
+  await loadMeetings();
+  await loadRegistrations();
+  showMessage("#meetingStatusMessage", successMessage, "success");
+}
+
+function setMeetingManagementExpanded(isExpanded) {
+  const body = $("#meetingManagementBody");
+  const button = $("#toggleMeetingManagement");
+  body.hidden = !isExpanded;
+  button.setAttribute("aria-expanded", String(isExpanded));
+  button.textContent = isExpanded ? "收合聚會管理" : "展開聚會管理";
+}
+
+function getMeetingsPageCount() {
+  return Math.max(1, Math.ceil(getFilteredMeetings().length / MEETINGS_PAGE_SIZE));
+}
+
+function normalizeMeetingsPage() {
+  if (!Number.isFinite(meetingsPage)) meetingsPage = 1;
+  meetingsPage = Math.trunc(meetingsPage);
+  meetingsPage = Math.min(Math.max(meetingsPage, 1), getMeetingsPageCount());
+}
+
+function renderMeetingPagination() {
+  const pagination = $("#meetingPagination");
+  if (!pagination) return;
+
+  const pageCount = getMeetingsPageCount();
+  if (getFilteredMeetings().length <= MEETINGS_PAGE_SIZE) {
+    pagination.innerHTML = "";
+    pagination.hidden = true;
+    return;
+  }
+
+  pagination.hidden = false;
+  pagination.innerHTML = `
+    <button class="ghost-button" type="button" data-page="prev" ${meetingsPage === 1 ? "disabled" : ""}>上一頁</button>
+    <span>第 ${meetingsPage} / ${pageCount} 頁</span>
+    <button class="ghost-button" type="button" data-page="next" ${meetingsPage === pageCount ? "disabled" : ""}>下一頁</button>
+  `;
+
+  pagination.querySelectorAll("button").forEach((button) => {
+    button.addEventListener("click", () => {
+      meetingsPage += button.dataset.page === "next" ? 1 : -1;
+      meetingsPage = Math.min(Math.max(meetingsPage, 1), pageCount);
+      renderMeetingList();
+    });
+  });
 }
 
 function startEditMeeting(meetingId) {
+  setMeetingManagementExpanded(true);
   const meeting = meetings.find((item) => item.id === meetingId);
   if (!meeting) return;
 
@@ -303,12 +548,21 @@ async function toggleMeetingOpen(meetingId, isOpen) {
 async function loadRegistrations() {
   showMessage("#adminMessage", "正在載入報名名單...", "info");
   const meetingId = $("#meetingFilter").value;
+
+  if (!meetingId) {
+    registrations = [];
+    registrationsPage = 1;
+    renderStats();
+    renderRegistrations();
+    showMessage("#adminMessage", "", "info");
+    return;
+  }
+
   let query = db
     .from("registrations")
     .select("*, meetings(title,meeting_date)")
+    .eq("meeting_id", meetingId)
     .order("created_at", { ascending: false });
-
-  if (meetingId) query = query.eq("meeting_id", meetingId);
 
   const { data, error } = await query;
   if (error) {
@@ -317,6 +571,7 @@ async function loadRegistrations() {
   }
 
   registrations = data || [];
+  normalizeRegistrationsPage();
   renderStats();
   renderRegistrations();
   showMessage("#adminMessage", "", "info");
@@ -338,13 +593,14 @@ function renderRegistrations() {
   const mobileList = $("#registrationCards");
   desktopBody.innerHTML = "";
   mobileList.innerHTML = "";
+  renderRegistrationPagination();
 
   if (registrations.length === 0) {
     mobileList.innerHTML = '<p class="empty-state">目前沒有報名資料。</p>';
     return;
   }
 
-  registrations.forEach((item) => {
+  getCurrentPageRegistrations().forEach((item) => {
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${item.meetings?.title || ""}</td>
@@ -382,6 +638,49 @@ function renderRegistrations() {
   });
 }
 
+function getCurrentPageRegistrations() {
+  const pageStart = (registrationsPage - 1) * REGISTRATIONS_PAGE_SIZE;
+  return registrations.slice(pageStart, pageStart + REGISTRATIONS_PAGE_SIZE);
+}
+
+function getRegistrationsPageCount() {
+  return Math.max(1, Math.ceil(registrations.length / REGISTRATIONS_PAGE_SIZE));
+}
+
+function normalizeRegistrationsPage() {
+  if (!Number.isFinite(registrationsPage)) registrationsPage = 1;
+  registrationsPage = Math.trunc(registrationsPage);
+  registrationsPage = Math.min(Math.max(registrationsPage, 1), getRegistrationsPageCount());
+}
+
+function renderRegistrationPagination() {
+  const pagination = $("#registrationPagination");
+  if (!pagination) return;
+
+  normalizeRegistrationsPage();
+  const pageCount = getRegistrationsPageCount();
+  if (registrations.length <= REGISTRATIONS_PAGE_SIZE) {
+    pagination.innerHTML = "";
+    pagination.hidden = true;
+    return;
+  }
+
+  pagination.hidden = false;
+  pagination.innerHTML = `
+    <button class="ghost-button" type="button" data-page="prev" ${registrationsPage === 1 ? "disabled" : ""}>上一頁</button>
+    <span>第 ${registrationsPage} / ${pageCount} 頁，每頁 ${REGISTRATIONS_PAGE_SIZE} 筆</span>
+    <button class="ghost-button" type="button" data-page="next" ${registrationsPage === pageCount ? "disabled" : ""}>下一頁</button>
+  `;
+
+  pagination.querySelectorAll("button").forEach((button) => {
+    button.addEventListener("click", () => {
+      registrationsPage += button.dataset.page === "next" ? 1 : -1;
+      normalizeRegistrationsPage();
+      renderRegistrations();
+    });
+  });
+}
+
 function exportCsv() {
   if (registrations.length === 0) return;
   const headers = ["聚會名稱", "邀請人", "會所", "區", "是否用餐", "報名人數", "葷食數量", "素食數量", "受邀人姓名", "備註", "建立時間", "更新時間"];
@@ -405,7 +704,21 @@ function exportCsv() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `registrations-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.download = `報名-${getSelectedMeetingFilenamePart()}-${new Date().toISOString().slice(0, 10)}.csv`;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+function getSelectedMeetingFilenamePart() {
+  const meetingId = $("#meetingFilter").value;
+  const meeting = meetings.find((item) => item.id === meetingId);
+  return sanitizeFilenamePart(meeting?.title || "未選取聚會");
+}
+
+function sanitizeFilenamePart(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[\\/:*?"<>|]/g, "-")
+    .replace(/\s+/g, " ")
+    .slice(0, 80) || "未命名聚會";
 }

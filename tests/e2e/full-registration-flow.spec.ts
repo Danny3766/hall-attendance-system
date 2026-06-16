@@ -16,6 +16,7 @@ test('admin creates meeting and user completes full registration flow', async ({
     await page.getByRole('button', { name: '登入' }).click();
 
     await expect(page.locator('#adminPanel')).toBeVisible();
+    await expandMeetingManagement(page);
     await page.getByRole('button', { name: '新增聚會' }).click();
     await page.getByRole('textbox', { name: '聚會名稱' }).fill(meetingTitle);
     await page.getByLabel('聚會時間').fill(meetingDate);
@@ -25,7 +26,7 @@ test('admin creates meeting and user completes full registration flow', async ({
     await page.getByRole('button', { name: '建立聚會' }).click();
 
     await expect(page.locator('#meetingStatusMessage')).toContainText('聚會已建立');
-    await expect(page.locator('#meetingCards')).toContainText(meetingTitle);
+    await expect(page.locator('#meetingFilter')).toContainText(meetingTitle);
   });
 
   await test.step('user registers for the new meeting', async () => {
@@ -164,14 +165,22 @@ test('admin creates meeting and user completes full registration flow', async ({
     await expect(page.locator('#totalPeople')).toHaveText('3');
     await expect(page.locator('#totalMeat')).toHaveText('1');
     await expect(page.locator('#totalVeg')).toHaveText('2');
+    await expect(page.locator('#meetingFilter option[value=""]')).toHaveCount(0);
+    await expect(page.locator('#registrationTableBody tr')).toHaveCount(1);
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: '匯出 CSV' }).click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toMatch(/^報名-/);
+    expect(download.suggestedFilename()).toContain(meetingTitle);
   });
 });
 
 test('closed meeting blocks later edits from success page', async ({ page }) => {
   const suffix = `${Date.now()}-closed`;
   const meetingTitle = `E2E 關閉修改 ${suffix}`;
-  const meetingDate = formatDateTimeLocal(daysFromNow(7, 15, 0));
-  const registrationDeadline = formatDateTimeLocal(daysFromNow(6, 20, 0));
+  const meetingDate = formatDateTimeLocal(daysFromNow(60, 15, 0));
+  const registrationDeadline = formatDateTimeLocal(daysFromNow(59, 20, 0));
 
   await test.step('admin creates an open meeting', async () => {
     await page.goto('/admin.html');
@@ -180,6 +189,7 @@ test('closed meeting blocks later edits from success page', async ({ page }) => 
     await page.getByRole('button', { name: '登入' }).click();
 
     await expect(page.locator('#adminPanel')).toBeVisible();
+    await expandMeetingManagement(page);
     await page.getByRole('button', { name: '新增聚會' }).click();
     await page.getByRole('textbox', { name: '聚會名稱' }).fill(meetingTitle);
     await page.getByLabel('聚會時間').fill(meetingDate);
@@ -188,7 +198,7 @@ test('closed meeting blocks later edits from success page', async ({ page }) => 
     await page.getByRole('textbox', { name: '說明' }).fill('Playwright 關閉報名後修改限制測試');
     await page.getByRole('button', { name: '建立聚會' }).click();
 
-    await expect(page.locator('#meetingCards')).toContainText(meetingTitle);
+    await expect(page.locator('#meetingFilter')).toContainText(meetingTitle);
   });
 
   let successUrl = '';
@@ -217,9 +227,9 @@ test('closed meeting blocks later edits from success page', async ({ page }) => 
   await test.step('admin closes the meeting', async () => {
     await page.goto('/admin.html');
     await expect(page.locator('#adminPanel')).toBeVisible();
-    await expect(page.locator('#meetingCards')).toContainText(meetingTitle);
-
-    const meetingCard = page.locator('.meeting-admin-card', { hasText: meetingTitle }).first();
+    await expect(page.locator('#meetingFilter')).toContainText(meetingTitle);
+    await expandMeetingManagement(page);
+    const meetingCard = await findMeetingCard(page, meetingTitle);
     await meetingCard.getByRole('button', { name: '關閉報名' }).click();
     await expect(page.locator('#meetingStatusMessage')).toContainText('聚會已關閉報名');
   });
@@ -237,9 +247,9 @@ test('closed meeting blocks later edits from success page', async ({ page }) => 
   await test.step('admin reopens the meeting and editing works again', async () => {
     await page.goto('/admin.html');
     await expect(page.locator('#adminPanel')).toBeVisible();
-    await expect(page.locator('#meetingCards')).toContainText(meetingTitle);
-
-    const meetingCard = page.locator('.meeting-admin-card', { hasText: meetingTitle }).first();
+    await expect(page.locator('#meetingFilter')).toContainText(meetingTitle);
+    await expandMeetingManagement(page);
+    const meetingCard = await findMeetingCard(page, meetingTitle);
     await meetingCard.getByRole('button', { name: '開放報名' }).click();
     await expect(page.locator('#meetingStatusMessage')).toContainText('聚會已開放報名');
 
@@ -324,6 +334,67 @@ test('multiple guests can be added and removed before registration', async ({ pa
   await expect(page.locator('#confirmMealCounts')).toHaveText('葷食 1 份 / 素食 0 份');
 });
 
+test('admin dashboard supports bulk meeting actions and deletion', async ({ page }) => {
+  const suffix = `${Date.now()}-bulk`;
+  const firstTitle = `E2E 批次聚會甲 ${suffix}`;
+  const secondTitle = `E2E 批次聚會乙 ${suffix}`;
+
+  await createMeeting(page, firstTitle, 'Playwright 批次管理測試甲', 90, 9);
+  await createMeeting(page, secondTitle, 'Playwright 批次管理測試乙', 91, 9);
+
+  await page.goto('/admin.html', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#adminPanel')).toBeVisible();
+  await expect(page.locator('#meetingFilter')).toContainText(firstTitle);
+  await expect(page.locator('#meetingFilter')).toContainText(secondTitle);
+  await page.getByRole('button', { name: '收合報名資料' }).click();
+  await expect(page.locator('#registrationFiltersBody')).toBeHidden();
+  await expect(page.locator('.stats-grid')).toBeHidden();
+  await expect(page.locator('.table-card')).toBeHidden();
+  await page.getByRole('button', { name: '展開報名資料' }).click();
+  await expect(page.locator('#registrationFiltersBody')).toBeVisible();
+  await expect(page.locator('.stats-grid')).toBeVisible();
+  await expect(page.locator('.table-card')).toBeVisible();
+  await expandMeetingManagement(page);
+
+  await expect(page.locator('#meetingTotalCount')).not.toHaveText('0');
+  await expect(page.locator('#meetingOpenCount')).not.toHaveText('0');
+
+  await selectMeetingForBulkAction(page, firstTitle);
+  await selectMeetingForBulkAction(page, secondTitle);
+  await expect(page.locator('#meetingSelectedCount')).toHaveText('2');
+
+  await page.getByRole('button', { name: '批次關閉' }).click();
+  await expect(page.locator('#meetingStatusMessage')).toContainText('已關閉 2 個聚會');
+  await expect(await findMeetingCard(page, firstTitle)).toContainText('已關閉');
+  await expect(await findMeetingCard(page, secondTitle)).toContainText('已關閉');
+
+  await page.getByRole('button', { name: /關閉報名\s*\d+/ }).click();
+  await expect(await findMeetingCard(page, firstTitle)).toBeVisible();
+  await expect(await findMeetingCard(page, secondTitle)).toBeVisible();
+  await page.getByRole('button', { name: /開放報名\s*\d+/ }).click();
+  await expect(page.locator('.meeting-admin-card', { hasText: firstTitle })).toHaveCount(0);
+  await expect(page.locator('.meeting-admin-card', { hasText: secondTitle })).toHaveCount(0);
+  await page.getByRole('button', { name: /全部聚會\s*\d+/ }).click();
+
+  await selectMeetingForBulkAction(page, firstTitle);
+  await selectMeetingForBulkAction(page, secondTitle);
+  await page.getByRole('button', { name: '批次開放' }).click();
+  await expect(page.locator('#meetingStatusMessage')).toContainText('已開放 2 個聚會');
+  await expect(await findMeetingCard(page, firstTitle)).toContainText('開放中');
+  await expect(await findMeetingCard(page, secondTitle)).toContainText('開放中');
+
+  await selectMeetingForBulkAction(page, firstTitle);
+  await selectMeetingForBulkAction(page, secondTitle);
+  page.once('dialog', async (dialog) => {
+    expect(dialog.message()).toContain('確定要移除 2 個聚會');
+    await dialog.accept();
+  });
+  await page.getByRole('button', { name: '批次移除' }).click();
+  await expect(page.locator('#meetingStatusMessage')).toContainText('已移除 2 個聚會');
+  await expect(page.locator('#meetingFilter')).not.toContainText(firstTitle);
+  await expect(page.locator('#meetingFilter')).not.toContainText(secondTitle);
+});
+
 function daysFromNow(days: number, hours: number, minutes: number) {
   const value = new Date();
   value.setDate(value.getDate() + days);
@@ -353,7 +424,7 @@ async function selectOptionByTextStart(locator: Locator, textStart: string) {
   await expect(locator).toHaveValue(optionValue);
 }
 
-async function createMeeting(page: import('@playwright/test').Page, title: string, description: string) {
+async function createMeeting(page: import('@playwright/test').Page, title: string, description: string, days = 7, hour = 10) {
   await page.goto('/admin.html', { waitUntil: 'domcontentloaded' });
   if (await page.locator('#loginPanel').isVisible().catch(() => false)) {
     await page.getByRole('textbox', { name: '帳號' }).fill('admin2');
@@ -362,14 +433,50 @@ async function createMeeting(page: import('@playwright/test').Page, title: strin
   }
 
   await expect(page.locator('#adminPanel')).toBeVisible();
+  await expandMeetingManagement(page);
   await page.getByRole('button', { name: '新增聚會' }).click();
   await page.getByRole('textbox', { name: '聚會名稱' }).fill(title);
-  await page.getByLabel('聚會時間').fill(formatDateTimeLocal(daysFromNow(7, 10, 0)));
-  await page.getByLabel('報名截止時間').fill(formatDateTimeLocal(daysFromNow(6, 18, 0)));
+  await page.getByLabel('聚會時間').fill(formatDateTimeLocal(daysFromNow(days, hour, 0)));
+  await page.getByLabel('報名截止時間').fill(formatDateTimeLocal(daysFromNow(days - 1, 18, 0)));
   await page.getByRole('textbox', { name: '地點' }).fill('38 會所');
   await page.getByRole('textbox', { name: '說明' }).fill(description);
   await page.getByRole('button', { name: '建立聚會' }).click();
-  await expect(page.locator('#meetingCards')).toContainText(title);
+  await expect(page.locator('#meetingFilter')).toContainText(title);
+}
+
+async function expandMeetingManagement(page: import('@playwright/test').Page) {
+  const body = page.locator('#meetingManagementBody');
+  if (await body.isHidden().catch(() => false)) {
+    await page.getByRole('button', { name: '展開聚會管理' }).click();
+  }
+  await expect(body).toBeVisible();
+}
+
+async function findMeetingCard(page: import('@playwright/test').Page, meetingTitle: string) {
+  await expandMeetingManagement(page);
+
+  const prevButton = page.locator('#meetingPagination button[data-page="prev"]');
+  for (let attempt = 0; attempt < 200; attempt += 1) {
+    if (!(await prevButton.isVisible().catch(() => false)) || await prevButton.isDisabled()) break;
+    await prevButton.click();
+  }
+
+  for (let attempt = 0; attempt < 200; attempt += 1) {
+    const card = page.locator('.meeting-admin-card', { hasText: meetingTitle }).first();
+    if (await card.isVisible().catch(() => false)) return card;
+
+    const nextButton = page.locator('#meetingPagination button[data-page="next"]');
+    if (!(await nextButton.isVisible().catch(() => false)) || await nextButton.isDisabled()) break;
+    await nextButton.click();
+  }
+
+  throw new Error(`Meeting card "${meetingTitle}" not found.`);
+}
+
+async function selectMeetingForBulkAction(page: import('@playwright/test').Page, meetingTitle: string) {
+  const card = await findMeetingCard(page, meetingTitle);
+  const checkbox = card.locator('.meeting-select');
+  if (!(await checkbox.isChecked())) await checkbox.check();
 }
 
 async function selectOpenMeeting(page: import('@playwright/test').Page, meetingTitle: string) {

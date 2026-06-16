@@ -33,114 +33,163 @@
       </section>
 
       <section id="adminPanel" hidden>
+        <section class="soft-card registration-filter-card">
+          <div class="section-heading filter-heading">
+            <div>
+              <p class="eyebrow">Registrations</p>
+              <h2>報名資料篩選</h2>
+            </div>
+            <button id="toggleRegistrationFilters" class="secondary-button" type="button" aria-expanded="true" aria-controls="registrationFiltersBody">收合報名資料</button>
+          </div>
+
+          <div id="registrationFiltersBody" class="registration-filters-body">
+            <div class="toolbar">
+              <label>
+                聚會篩選
+                <select id="meetingFilter"></select>
+              </label>
+              <div class="toolbar-actions">
+                <button id="exportCsv" class="secondary-button" type="button">匯出 CSV</button>
+                <button id="logoutButton" class="ghost-button" type="button">登出</button>
+              </div>
+            </div>
+
+            <section class="stats-grid">
+              <article class="stat-card"><span>總筆數</span><strong id="totalRows">0</strong></article>
+              <article class="stat-card"><span>總報名人數</span><strong id="totalPeople">0</strong></article>
+              <article class="stat-card"><span>葷食總數</span><strong id="totalMeat">0</strong></article>
+              <article class="stat-card"><span>素食總數</span><strong id="totalVeg">0</strong></article>
+            </section>
+
+            <section class="soft-card table-card">
+              <div id="registrationCards" class="mobile-list"></div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>聚會</th>
+                      <th>邀請人</th>
+                      <th>會所</th>
+                      <th>區</th>
+                      <th>用餐</th>
+                      <th>報名</th>
+                      <th>葷食</th>
+                      <th>素食</th>
+                      <th>受邀人</th>
+                      <th>備註</th>
+                      <th>更新時間</th>
+                    </tr>
+                  </thead>
+                  <tbody id="registrationTableBody"></tbody>
+                </table>
+              </div>
+              <nav id="registrationPagination" class="pagination-controls" aria-label="報名清單分頁"></nav>
+            </section>
+          </div>
+        </section>
+
         <section class="soft-card meeting-management-card">
           <div class="section-heading meeting-list-heading">
             <div>
               <p class="eyebrow">Meetings</p>
               <h2>聚會管理</h2>
-              <p class="section-description">先管理聚會清單，需要時再新增或編輯聚會資訊。</p>
+              <p class="section-description">需要新增、編輯或開關報名時再展開管理聚會。</p>
             </div>
             <div class="meeting-heading-actions">
+              <button id="toggleMeetingManagement" class="secondary-button" type="button" aria-expanded="false" aria-controls="meetingManagementBody">展開聚會管理</button>
+            </div>
+          </div>
+
+          <div id="meetingManagementBody" class="meeting-management-body" hidden>
+            <section class="meeting-dashboard" aria-label="聚會狀態摘要">
+              <article class="meeting-dashboard-card">
+                <button class="meeting-dashboard-filter active" type="button" data-meeting-status-filter="all" aria-pressed="true">
+                  <span>全部聚會</span><strong id="meetingTotalCount">0</strong>
+                </button>
+              </article>
+              <article class="meeting-dashboard-card open">
+                <button class="meeting-dashboard-filter" type="button" data-meeting-status-filter="open" aria-pressed="false">
+                  <span>開放報名</span><strong id="meetingOpenCount">0</strong>
+                </button>
+              </article>
+              <article class="meeting-dashboard-card closed">
+                <button class="meeting-dashboard-filter" type="button" data-meeting-status-filter="closed" aria-pressed="false">
+                  <span>關閉報名</span><strong id="meetingClosedCount">0</strong>
+                </button>
+              </article>
+              <article class="meeting-dashboard-card selected"><span>已選取</span><strong id="meetingSelectedCount">0</strong></article>
+            </section>
+
+            <div class="meeting-heading-actions meeting-body-actions">
               <button id="showMeetingForm" class="primary-button" type="button">新增聚會</button>
               <button id="refreshMeetings" class="ghost-button" type="button">重新整理</button>
             </div>
-          </div>
 
-          <div id="meetingStatusMessage" class="message" hidden></div>
-
-          <section id="meetingFormPanel" class="meeting-form-panel" hidden>
-            <div class="section-heading">
-              <p class="eyebrow">Meeting</p>
-              <h2 id="meetingFormTitle">建立聚會</h2>
+            <div class="meeting-bulk-toolbar" aria-label="批次管理聚會">
+              <label class="select-all-row">
+                <input id="selectPageMeetings" type="checkbox">
+                選取本頁聚會
+              </label>
+              <button id="bulkOpenMeetings" class="secondary-button" type="button" disabled>批次開放</button>
+              <button id="bulkCloseMeetings" class="ghost-button" type="button" disabled>批次關閉</button>
+              <button id="bulkDeleteMeetings" class="danger-button" type="button" disabled>批次移除</button>
             </div>
 
-            <form id="meetingForm" class="app-form">
-              <input name="meeting_id" type="hidden">
+            <div id="meetingStatusMessage" class="message" hidden></div>
 
-              <label>
-                聚會名稱
-                <input name="title" type="text" placeholder="例如：06/14 主日聚會" required>
-              </label>
-
-              <div class="form-row">
-                <label>
-                  聚會時間
-                  <input name="meeting_date" type="datetime-local" required>
-                </label>
-                <label>
-                  報名截止時間
-                  <input name="registration_deadline" type="datetime-local">
-                </label>
+            <section id="meetingFormPanel" class="meeting-form-panel" hidden>
+              <div class="section-heading">
+                <p class="eyebrow">Meeting</p>
+                <h2 id="meetingFormTitle">建立聚會</h2>
               </div>
 
-              <label>
-                地點
-                <input name="location" type="text" placeholder="例如：38 會所">
-              </label>
+              <form id="meetingForm" class="app-form">
+                <input name="meeting_id" type="hidden">
 
-              <label>
-                說明
-                <textarea name="description" rows="3" placeholder="顯示在報名頁左側的聚會說明"></textarea>
-              </label>
+                <label>
+                  聚會名稱
+                  <input name="title" type="text" placeholder="例如：06/14 主日聚會" required>
+                </label>
 
-              <label class="checkbox-card compact-checkbox">
-                <input name="is_open" type="checkbox" checked>
-                <span>
-                  <strong>開放報名</strong>
-                  <small>取消勾選後，報名頁不會顯示此聚會。</small>
-                </span>
-              </label>
+                <div class="form-row">
+                  <label>
+                    聚會時間
+                    <input name="meeting_date" type="datetime-local" required>
+                  </label>
+                  <label>
+                    報名截止時間
+                    <input name="registration_deadline" type="datetime-local">
+                  </label>
+                </div>
 
-              <div id="meetingMessage" class="message" hidden></div>
-              <div class="form-actions">
-                <button id="saveMeetingButton" class="primary-button" type="submit">建立聚會</button>
-                <button id="cancelMeetingEdit" class="ghost-button" type="button" hidden>取消編輯</button>
-              </div>
-            </form>
-          </section>
+                <label>
+                  地點
+                  <input name="location" type="text" placeholder="例如：38 會所">
+                </label>
 
-          <div id="meetingCards" class="meeting-list"></div>
-        </section>
+                <label>
+                  說明
+                  <textarea name="description" rows="3" placeholder="顯示在報名頁左側的聚會說明"></textarea>
+                </label>
 
-        <div class="toolbar soft-card">
-          <label>
-            聚會篩選
-            <select id="meetingFilter"></select>
-          </label>
-          <div class="toolbar-actions">
-            <button id="exportCsv" class="secondary-button" type="button">匯出 CSV</button>
-            <button id="logoutButton" class="ghost-button" type="button">登出</button>
-          </div>
-        </div>
+                <label class="checkbox-card compact-checkbox">
+                  <input name="is_open" type="checkbox" checked>
+                  <span>
+                    <strong>開放報名</strong>
+                    <small>取消勾選後，報名頁不會顯示此聚會。</small>
+                  </span>
+                </label>
 
-        <section class="stats-grid">
-          <article class="stat-card"><span>總筆數</span><strong id="totalRows">0</strong></article>
-          <article class="stat-card"><span>總報名人數</span><strong id="totalPeople">0</strong></article>
-          <article class="stat-card"><span>葷食總數</span><strong id="totalMeat">0</strong></article>
-          <article class="stat-card"><span>素食總數</span><strong id="totalVeg">0</strong></article>
-        </section>
+                <div id="meetingMessage" class="message" hidden></div>
+                <div class="form-actions">
+                  <button id="saveMeetingButton" class="primary-button" type="submit">建立聚會</button>
+                  <button id="cancelMeetingEdit" class="ghost-button" type="button" hidden>取消編輯</button>
+                </div>
+              </form>
+            </section>
 
-        <section class="soft-card table-card">
-          <div id="registrationCards" class="mobile-list"></div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>聚會</th>
-                  <th>邀請人</th>
-                  <th>會所</th>
-                  <th>區</th>
-                  <th>用餐</th>
-                  <th>報名</th>
-                  <th>葷食</th>
-                  <th>素食</th>
-                  <th>受邀人</th>
-                  <th>備註</th>
-                  <th>更新時間</th>
-                </tr>
-              </thead>
-              <tbody id="registrationTableBody"></tbody>
-            </table>
+            <div id="meetingCards" class="meeting-list"></div>
+            <nav id="meetingPagination" class="pagination-controls" aria-label="聚會列表分頁"></nav>
           </div>
         </section>
       </section>
@@ -150,6 +199,6 @@
     <script src="js/config.js?v=20260611-3"></script>
     <script src="js/supabaseClient.js?v=20260611-3"></script>
     <script src="js/utils.js?v=20260613-1"></script>
-    <script src="js/admin.js?v=20260613-1"></script>
+    <script src="js/admin.js?v=20260613-6"></script>
   </body>
 </html>
