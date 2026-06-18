@@ -7,6 +7,7 @@ let registrationsPage = 1;
 let meetingStatusFilter = "all";
 let selectedMeetingIds = new Set();
 const REGISTRATIONS_PAGE_SIZE = 20;
+const ADMIN_LOGGED_OUT_KEY = "adminLoggedOut";
 
 document.addEventListener("DOMContentLoaded", async () => {
   $("#loginPanel").hidden = true;
@@ -44,6 +45,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await loadRegistrations();
   } else {
     $("#loginPanel").hidden = false;
+    if (sessionStorage.getItem(ADMIN_LOGGED_OUT_KEY)) resetLoginForm();
   }
 });
 
@@ -65,6 +67,7 @@ async function handleLogin(event) {
   const isAdmin = await ensureAdminProfile(data.session?.user);
   if (!isAdmin) return;
 
+  sessionStorage.removeItem(ADMIN_LOGGED_OUT_KEY);
   showAdmin();
   await loadMeetings();
   await loadRegistrations();
@@ -105,9 +108,10 @@ async function ensureAdminProfile(user) {
 
 async function rejectUnauthorizedAdmin() {
   await db.auth.signOut();
+  sessionStorage.setItem(ADMIN_LOGGED_OUT_KEY, "true");
   $("#adminPanel").hidden = true;
   $("#loginPanel").hidden = false;
-  $("#loginForm").reset();
+  clearLoginFields();
   showMessage("#adminMessage", "此帳號沒有管理權限。", "error");
 }
 
@@ -140,6 +144,7 @@ function getSafeLoginErrorMessage(message) {
 
 async function handleLogout() {
   await db.auth.signOut();
+  sessionStorage.setItem(ADMIN_LOGGED_OUT_KEY, "true");
   $("#adminPanel").hidden = true;
   $("#loginPanel").hidden = false;
   resetLoginForm();
@@ -151,8 +156,17 @@ function showAdmin() {
 }
 
 function resetLoginForm() {
-  $("#loginForm").reset();
+  clearLoginFields();
   showMessage("#adminMessage", "", "info");
+  requestAnimationFrame(clearLoginFields);
+  window.setTimeout(clearLoginFields, 100);
+  window.setTimeout(clearLoginFields, 500);
+}
+
+function clearLoginFields() {
+  const form = $("#loginForm");
+  form.elements.namedItem("username").value = "";
+  form.elements.namedItem("password").value = "";
 }
 
 function toggleRegistrationFilters() {

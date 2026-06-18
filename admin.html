@@ -18,14 +18,14 @@
 
       <section id="loginPanel" class="soft-card form-card narrow-card">
         <h2>管理者登入</h2>
-          <form id="loginForm" class="app-form">
+          <form id="loginForm" class="app-form" autocomplete="off">
             <label>
               帳號
-              <input name="username" type="text" autocomplete="username" required>
+              <input name="username" type="text" autocomplete="off" required>
             </label>
           <label>
             密碼
-            <input name="password" type="password" autocomplete="current-password" required>
+            <input name="password" type="password" autocomplete="off" required>
           </label>
           <div id="adminMessage" class="message" hidden></div>
           <button class="primary-button" type="submit">登入</button>

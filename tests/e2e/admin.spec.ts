@@ -23,4 +23,9 @@ test('admin logout clears the login form', async ({ page }) => {
   await expect(page.locator('#loginPanel')).toBeVisible();
   await expect(page.getByRole('textbox', { name: '帳號' })).toHaveValue('');
   await expect(page.getByLabel('密碼')).toHaveValue('');
+
+  await page.reload();
+  await expect(page.locator('#loginPanel')).toBeVisible();
+  await expect(page.getByRole('textbox', { name: '帳號' })).toHaveValue('');
+  await expect(page.getByLabel('密碼')).toHaveValue('');
 });
