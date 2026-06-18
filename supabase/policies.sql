@@ -1,6 +1,7 @@
 alter table meetings enable row level security;
 alter table registrations enable row level security;
 alter table admin_profiles enable row level security;
+alter table location_options enable row level security;
 
 drop policy if exists "Open meetings are readable" on meetings;
 create policy "Open meetings are readable"
@@ -11,6 +12,19 @@ using (is_open = true or auth.role() = 'authenticated');
 drop policy if exists "Authenticated users can manage meetings" on meetings;
 create policy "Authenticated users can manage meetings"
 on meetings for all
+to authenticated
+using (true)
+with check (true);
+
+drop policy if exists "Active locations are readable" on location_options;
+create policy "Active locations are readable"
+on location_options for select
+to anon, authenticated
+using (is_active = true or auth.role() = 'authenticated');
+
+drop policy if exists "Authenticated users can manage locations" on location_options;
+create policy "Authenticated users can manage locations"
+on location_options for all
 to authenticated
 using (true)
 with check (true);

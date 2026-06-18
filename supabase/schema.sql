@@ -57,7 +57,25 @@ create table if not exists admin_profiles (
   constraint admin_profiles_username_format check (username ~ '^[a-zA-Z0-9_-]{3,32}$')
 );
 
+create table if not exists location_options (
+  id uuid primary key default gen_random_uuid(),
+  hall text not null,
+  district text not null,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+
+  constraint location_options_hall_district_unique unique (hall, district),
+  constraint location_options_hall_not_blank check (length(trim(hall)) > 0),
+  constraint location_options_district_not_blank check (length(trim(district)) > 0)
+);
+
+drop index if exists location_options_active_sort_idx;
+
+alter table location_options
+drop column if exists sort_order;
+
 create index if not exists admin_profiles_username_idx on admin_profiles (username);
+create index if not exists location_options_active_name_idx on location_options (is_active, hall, district);
 
 alter table registrations
 add column if not exists meal_required boolean not null default false;
