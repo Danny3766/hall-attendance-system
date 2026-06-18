@@ -421,6 +421,7 @@ select:disabled {
 .secondary-button,
 .ghost-button,
 .outline-button,
+.export-button,
 .danger-button {
   min-height: 48px;
   border: 0;
@@ -457,6 +458,13 @@ select:disabled {
   box-shadow: 0 10px 22px rgba(211, 143, 52, 0.12);
 }
 
+.export-button {
+  color: #2f3430;
+  background: linear-gradient(135deg, #f2f1ec, #d5d2c8);
+  border: 1px solid rgba(88, 87, 80, 0.2);
+  box-shadow: 0 14px 28px rgba(80, 78, 70, 0.14);
+}
+
 .danger-button {
   color: #fff;
   background: linear-gradient(135deg, #b75a4d, var(--danger));
@@ -467,6 +475,7 @@ select:disabled {
 .secondary-button:disabled,
 .ghost-button:disabled,
 .outline-button:disabled,
+.export-button:disabled,
 .danger-button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
@@ -661,6 +670,27 @@ select:disabled {
 }
 
 .narrow-card { max-width: 520px; margin: 0 auto; }
+
+.admin-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 14px;
+  padding: 10px 6px;
+}
+
+.admin-topbar strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 1.15rem;
+}
+
+.admin-topbar .ghost-button {
+  min-width: 110px;
+  background: rgba(255, 255, 255, 0.78);
+}
 
 .registration-filter-card {
   padding: 22px;
@@ -955,7 +985,7 @@ select:disabled {
 
 .toolbar-actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 10px;
 }
 

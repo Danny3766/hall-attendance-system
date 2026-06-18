@@ -33,6 +33,14 @@
       </section>
 
       <section id="adminPanel" hidden>
+        <div class="admin-topbar">
+          <div>
+            <p class="eyebrow">Admin</p>
+            <strong>後台管理</strong>
+          </div>
+          <button id="logoutButton" class="ghost-button" type="button">登出</button>
+        </div>
+
         <section class="soft-card registration-filter-card">
           <div class="section-heading filter-heading meeting-list-heading">
             <div>
@@ -51,8 +59,7 @@
                 <select id="meetingFilter"></select>
               </label>
               <div class="toolbar-actions">
-                <button id="exportCsv" class="secondary-button" type="button">匯出 CSV</button>
-                <button id="logoutButton" class="ghost-button" type="button">登出</button>
+                <button id="exportCsv" class="export-button" type="button">匯出 CSV</button>
               </div>
             </div>
 
