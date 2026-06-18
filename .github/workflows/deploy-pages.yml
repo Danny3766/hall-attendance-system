@@ -1,0 +1,75 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate app config
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          ADMIN_EMAIL_DOMAIN: ${{ secrets.ADMIN_EMAIL_DOMAIN }}
+          ADMIN_LEGACY_EMAIL_DOMAINS: ${{ secrets.ADMIN_LEGACY_EMAIL_DOMAINS }}
+          ADMIN_REGISTRATION_ENABLED: ${{ secrets.ADMIN_REGISTRATION_ENABLED }}
+        run: |
+          node <<'NODE'
+          const fs = require("fs");
+
+          const required = ["SUPABASE_URL", "SUPABASE_ANON_KEY", "ADMIN_EMAIL_DOMAIN"];
+          const missing = required.filter((name) => !process.env[name]);
+          if (missing.length > 0) {
+            throw new Error(`Missing required secrets: ${missing.join(", ")}`);
+          }
+
+          const legacyDomains = (process.env.ADMIN_LEGACY_EMAIL_DOMAINS || "")
+            .split(",")
+            .map((domain) => domain.trim())
+            .filter(Boolean);
+
+          const config = {
+            SUPABASE_URL: process.env.SUPABASE_URL,
+            SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+            ADMIN_EMAIL_DOMAIN: process.env.ADMIN_EMAIL_DOMAIN,
+            ADMIN_LEGACY_EMAIL_DOMAINS: legacyDomains,
+            ADMIN_REGISTRATION_ENABLED: process.env.ADMIN_REGISTRATION_ENABLED === "true",
+          };
+
+          fs.writeFileSync(
+            "js/config.js",
+            `window.APP_CONFIG = ${JSON.stringify(config, null, 2)};\n`
+          );
+          NODE
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
