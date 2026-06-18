@@ -420,6 +420,7 @@ select:disabled {
 .primary-button,
 .secondary-button,
 .ghost-button,
+.outline-button,
 .danger-button {
   min-height: 48px;
   border: 0;
@@ -449,6 +450,13 @@ select:disabled {
   border: 1px solid var(--line);
 }
 
+.outline-button {
+  color: var(--primary-dark);
+  background: #fffaf0;
+  border: 2px solid #d9a84c;
+  box-shadow: 0 10px 22px rgba(211, 143, 52, 0.12);
+}
+
 .danger-button {
   color: #fff;
   background: linear-gradient(135deg, #b75a4d, var(--danger));
@@ -458,6 +466,7 @@ select:disabled {
 .primary-button:disabled,
 .secondary-button:disabled,
 .ghost-button:disabled,
+.outline-button:disabled,
 .danger-button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
@@ -662,6 +671,10 @@ select:disabled {
   margin-bottom: 0;
 }
 
+.filter-heading .meeting-heading-actions {
+  justify-content: flex-start;
+}
+
 .registration-filters-body {
   display: grid;
   gap: 14px;
@@ -840,6 +853,18 @@ select:disabled {
   margin-top: 4px;
 }
 
+.pagination-toolbar {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  align-items: end;
+  margin: 2px 0 4px;
+}
+
+.pagination-toolbar label {
+  margin: 0;
+}
+
 .pagination-controls[hidden] {
   display: none;
 }
@@ -1012,7 +1037,9 @@ th {
   .lookup-form { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; }
   .lookup-form .secondary-button { grid-column: 1 / -1; }
   .meeting-dashboard { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .meeting-bulk-toolbar { grid-template-columns: 1fr auto auto auto; }
+  .meeting-bulk-toolbar { grid-template-columns: 1fr auto auto auto auto; }
+  .pagination-toolbar { grid-template-columns: minmax(160px, 220px) 1fr; }
+  .pagination-toolbar .pagination-controls { justify-content: flex-end; }
   .meal-summary-row { grid-template-columns: minmax(220px, 0.9fr) minmax(220px, 1fr); }
   .meal-attendee-line { grid-template-columns: 1fr minmax(190px, 0.42fr); }
   .meal-attendee-line.meal-attendee-inline {
@@ -1046,6 +1073,7 @@ th {
   .guest-meal-panel { grid-template-columns: minmax(220px, 0.9fr) minmax(220px, 1fr); align-items: start; }
   .meeting-list-heading { grid-template-columns: 1fr auto; align-items: start; }
   .meeting-heading-actions { display: flex; width: auto; }
+  .filter-heading .meeting-heading-actions { justify-content: flex-end; }
 }
 
 @media (min-width: 960px) {

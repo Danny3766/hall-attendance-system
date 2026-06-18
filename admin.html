@@ -34,12 +34,14 @@
 
       <section id="adminPanel" hidden>
         <section class="soft-card registration-filter-card">
-          <div class="section-heading filter-heading">
+          <div class="section-heading filter-heading meeting-list-heading">
             <div>
               <p class="eyebrow">Registrations</p>
               <h2>報名資料篩選</h2>
             </div>
-            <button id="toggleRegistrationFilters" class="secondary-button" type="button" aria-expanded="true" aria-controls="registrationFiltersBody">收合報名資料</button>
+            <div class="meeting-heading-actions">
+              <button id="toggleRegistrationFilters" class="secondary-button" type="button" aria-expanded="true" aria-controls="registrationFiltersBody">收合報名資料</button>
+            </div>
           </div>
 
           <div id="registrationFiltersBody" class="registration-filters-body">
@@ -131,7 +133,8 @@
                 選取本頁聚會
               </label>
               <button id="bulkOpenMeetings" class="secondary-button" type="button" disabled>批次開放</button>
-              <button id="bulkCloseMeetings" class="ghost-button" type="button" disabled>批次關閉</button>
+              <button id="bulkCloseMeetings" class="outline-button" type="button" disabled>批次關閉</button>
+              <button id="clearMeetingSelection" class="ghost-button" type="button" disabled>取消選取</button>
               <button id="bulkDeleteMeetings" class="danger-button" type="button" disabled>批次移除</button>
             </div>
 
@@ -188,8 +191,20 @@
               </form>
             </section>
 
+            <div class="pagination-toolbar">
+              <label>
+                每頁筆數
+                <select id="meetingPageSize">
+                  <option value="5">5</option>
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+              </label>
+              <nav id="meetingPagination" class="pagination-controls" aria-label="聚會列表分頁"></nav>
+            </div>
             <div id="meetingCards" class="meeting-list"></div>
-            <nav id="meetingPagination" class="pagination-controls" aria-label="聚會列表分頁"></nav>
           </div>
         </section>
       </section>

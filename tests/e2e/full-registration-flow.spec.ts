@@ -356,8 +356,27 @@ test('admin dashboard supports bulk meeting actions and deletion', async ({ page
   await expect(page.locator('.table-card')).toBeVisible();
   await expandMeetingManagement(page);
 
+  await page.getByRole('button', { name: '新增聚會' }).click();
+  await expect(page.locator('#meetingFormPanel')).toBeVisible();
+  await page.getByRole('button', { name: '取消建立' }).click();
+  await expect(page.locator('#meetingFormPanel')).toBeHidden();
+  await expect(page.getByRole('button', { name: '新增聚會' })).toBeVisible();
+  await expect(page.locator('#meetingPageSize option')).toHaveText(['5', '10', '20', '50', '100']);
+  await page.locator('#meetingPageSize').selectOption('10');
+  await expect(page.locator('#meetingPageSize')).toHaveValue('10');
+  await page.locator('#meetingPageSize').selectOption('5');
+
   await expect(page.locator('#meetingTotalCount')).not.toHaveText('0');
   await expect(page.locator('#meetingOpenCount')).not.toHaveText('0');
+
+  await selectMeetingForBulkAction(page, firstTitle);
+  await expect(page.locator('#selectPageMeetings')).not.toBeChecked();
+  await expect(page.locator('#selectPageMeetings')).toHaveJSProperty('indeterminate', false);
+  await selectMeetingForBulkAction(page, secondTitle);
+  await expect(page.locator('#meetingSelectedCount')).toHaveText('2');
+  await page.getByRole('button', { name: '取消選取' }).click();
+  await expect(page.locator('#meetingSelectedCount')).toHaveText('0');
+  await expect(page.getByRole('button', { name: '批次關閉' })).toBeDisabled();
 
   await selectMeetingForBulkAction(page, firstTitle);
   await selectMeetingForBulkAction(page, secondTitle);

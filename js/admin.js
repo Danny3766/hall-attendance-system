@@ -2,10 +2,10 @@ const db = window.supabaseClient;
 let registrations = [];
 let meetings = [];
 let meetingsPage = 1;
+let meetingsPageSize = 5;
 let registrationsPage = 1;
 let meetingStatusFilter = "all";
 let selectedMeetingIds = new Set();
-const MEETINGS_PAGE_SIZE = 5;
 const REGISTRATIONS_PAGE_SIZE = 20;
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -17,8 +17,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     button.addEventListener("click", () => setMeetingStatusFilter(button.dataset.meetingStatusFilter));
   });
   $("#selectPageMeetings").addEventListener("change", handleSelectPageMeetings);
+  $("#meetingPageSize").addEventListener("change", handleMeetingPageSizeChange);
   $("#bulkOpenMeetings").addEventListener("click", () => bulkUpdateMeetingOpen(true));
   $("#bulkCloseMeetings").addEventListener("click", () => bulkUpdateMeetingOpen(false));
+  $("#clearMeetingSelection").addEventListener("click", clearMeetingSelection);
   $("#bulkDeleteMeetings").addEventListener("click", bulkDeleteMeetings);
   $("#meetingForm").addEventListener("submit", handleCreateMeeting);
   $("#cancelMeetingEdit").addEventListener("click", resetMeetingForm);
@@ -238,6 +240,8 @@ function showCreateMeetingForm() {
   $("#showMeetingForm").hidden = true;
   $("#meetingFormTitle").textContent = "建立聚會";
   $("#saveMeetingButton").textContent = "建立聚會";
+  $("#cancelMeetingEdit").textContent = "取消建立";
+  $("#cancelMeetingEdit").hidden = false;
   $("#meetingForm").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -260,8 +264,8 @@ function renderMeetingList() {
     return;
   }
 
-  let pageStart = (meetingsPage - 1) * MEETINGS_PAGE_SIZE;
-  let pageMeetings = visibleMeetings.slice(pageStart, pageStart + MEETINGS_PAGE_SIZE);
+  let pageStart = (meetingsPage - 1) * meetingsPageSize;
+  let pageMeetings = visibleMeetings.slice(pageStart, pageStart + meetingsPageSize);
   if (pageMeetings.length === 0 && visibleMeetings.length > 0) {
     meetingsPage = 1;
     pageStart = 0;
@@ -365,9 +369,21 @@ function handleSelectPageMeetings(event) {
   renderMeetingList();
 }
 
+function handleMeetingPageSizeChange(event) {
+  const value = Number(event.currentTarget.value);
+  meetingsPageSize = [5, 10, 20, 50, 100].includes(value) ? value : 5;
+  meetingsPage = 1;
+  renderMeetingList();
+}
+
+function clearMeetingSelection() {
+  selectedMeetingIds.clear();
+  renderMeetingList();
+}
+
 function getCurrentPageMeetings() {
-  const pageStart = (meetingsPage - 1) * MEETINGS_PAGE_SIZE;
-  return getFilteredMeetings().slice(pageStart, pageStart + MEETINGS_PAGE_SIZE);
+  const pageStart = (meetingsPage - 1) * meetingsPageSize;
+  return getFilteredMeetings().slice(pageStart, pageStart + meetingsPageSize);
 }
 
 function getFilteredMeetings() {
@@ -383,7 +399,7 @@ function syncPageSelectionCheckbox(pageMeetings) {
   const selectableCount = pageMeetings.length;
   const selectedCount = pageMeetings.filter((meeting) => selectedMeetingIds.has(meeting.id)).length;
   checkbox.checked = selectableCount > 0 && selectedCount === selectableCount;
-  checkbox.indeterminate = selectedCount > 0 && selectedCount < selectableCount;
+  checkbox.indeterminate = false;
   checkbox.disabled = selectableCount === 0;
 }
 
@@ -391,6 +407,7 @@ function syncBulkMeetingButtons() {
   const disabled = selectedMeetingIds.size === 0;
   $("#bulkOpenMeetings").disabled = disabled;
   $("#bulkCloseMeetings").disabled = disabled;
+  $("#clearMeetingSelection").disabled = disabled;
   $("#bulkDeleteMeetings").disabled = disabled;
 }
 
@@ -452,7 +469,7 @@ function setMeetingManagementExpanded(isExpanded) {
 }
 
 function getMeetingsPageCount() {
-  return Math.max(1, Math.ceil(getFilteredMeetings().length / MEETINGS_PAGE_SIZE));
+  return Math.max(1, Math.ceil(getFilteredMeetings().length / meetingsPageSize));
 }
 
 function normalizeMeetingsPage() {
@@ -465,8 +482,11 @@ function renderMeetingPagination() {
   const pagination = $("#meetingPagination");
   if (!pagination) return;
 
+  const pageSizeSelect = $("#meetingPageSize");
+  if (pageSizeSelect) pageSizeSelect.value = String(meetingsPageSize);
+
   const pageCount = getMeetingsPageCount();
-  if (getFilteredMeetings().length <= MEETINGS_PAGE_SIZE) {
+  if (getFilteredMeetings().length <= meetingsPageSize) {
     pagination.innerHTML = "";
     pagination.hidden = true;
     return;
@@ -475,7 +495,7 @@ function renderMeetingPagination() {
   pagination.hidden = false;
   pagination.innerHTML = `
     <button class="ghost-button" type="button" data-page="prev" ${meetingsPage === 1 ? "disabled" : ""}>上一頁</button>
-    <span>第 ${meetingsPage} / ${pageCount} 頁</span>
+    <span>第 ${meetingsPage} / ${pageCount} 頁，每頁 ${meetingsPageSize} 筆</span>
     <button class="ghost-button" type="button" data-page="next" ${meetingsPage === pageCount ? "disabled" : ""}>下一頁</button>
   `;
 
@@ -504,6 +524,7 @@ function startEditMeeting(meetingId) {
 
   $("#meetingFormTitle").textContent = "編輯聚會";
   $("#saveMeetingButton").textContent = "儲存修改";
+  $("#cancelMeetingEdit").textContent = "取消編輯";
   $("#cancelMeetingEdit").hidden = false;
   $("#meetingFormPanel").hidden = false;
   $("#showMeetingForm").hidden = true;
