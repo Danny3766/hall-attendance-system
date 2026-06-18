@@ -9,6 +9,7 @@ let selectedMeetingIds = new Set();
 const REGISTRATIONS_PAGE_SIZE = 20;
 
 document.addEventListener("DOMContentLoaded", async () => {
+  $("#loginPanel").hidden = true;
   $("#loginForm").addEventListener("submit", handleLogin);
   $("#toggleRegistrationFilters").addEventListener("click", toggleRegistrationFilters);
   $("#toggleMeetingManagement").addEventListener("click", toggleMeetingManagement);
@@ -34,9 +35,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const { data } = await db.auth.getSession();
   if (data.session) {
+    const isAdmin = await ensureAdminProfile(data.session.user);
+    if (!isAdmin) return;
+
     showAdmin();
     await loadMeetings();
     await loadRegistrations();
+  } else {
+    $("#loginPanel").hidden = false;
   }
 });
 
@@ -54,6 +60,10 @@ async function handleLogin(event) {
     return;
   }
 
+  const { data } = await db.auth.getSession();
+  const isAdmin = await ensureAdminProfile(data.session?.user);
+  if (!isAdmin) return;
+
   showAdmin();
   await loadMeetings();
   await loadRegistrations();
@@ -70,6 +80,33 @@ async function signInWithUsername(username, password) {
   }
 
   return { error: lastError };
+}
+
+async function ensureAdminProfile(user) {
+  if (!user?.id) {
+    await rejectUnauthorizedAdmin();
+    return false;
+  }
+
+  const { data, error } = await db
+    .from("admin_profiles")
+    .select("id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (error || !data) {
+    await rejectUnauthorizedAdmin();
+    return false;
+  }
+
+  return true;
+}
+
+async function rejectUnauthorizedAdmin() {
+  await db.auth.signOut();
+  $("#adminPanel").hidden = true;
+  $("#loginPanel").hidden = false;
+  showMessage("#adminMessage", "此帳號沒有管理權限。", "error");
 }
 
 function buildAdminEmail(username) {
