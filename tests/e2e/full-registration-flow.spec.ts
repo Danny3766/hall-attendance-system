@@ -19,8 +19,8 @@ test('admin creates meeting and user completes full registration flow', async ({
     await expandMeetingManagement(page);
     await page.getByRole('button', { name: '新增聚會' }).click();
     await page.getByRole('textbox', { name: '聚會名稱' }).fill(meetingTitle);
-    await page.getByLabel('聚會時間').fill(meetingDate);
-    await page.getByLabel('報名截止時間').fill(registrationDeadline);
+    await fillMeetingDateTime(page, '聚會時間', meetingDate);
+    await fillMeetingDateTime(page, '報名截止時間', registrationDeadline);
     await page.getByRole('textbox', { name: '地點' }).fill(meetingLocation);
     await page.getByRole('textbox', { name: '說明' }).fill('Playwright 建立的完整流程測試聚會');
     await page.getByRole('button', { name: '建立聚會' }).click();
@@ -192,8 +192,8 @@ test('closed meeting blocks later edits from success page', async ({ page }) => 
     await expandMeetingManagement(page);
     await page.getByRole('button', { name: '新增聚會' }).click();
     await page.getByRole('textbox', { name: '聚會名稱' }).fill(meetingTitle);
-    await page.getByLabel('聚會時間').fill(meetingDate);
-    await page.getByLabel('報名截止時間').fill(registrationDeadline);
+    await fillMeetingDateTime(page, '聚會時間', meetingDate);
+    await fillMeetingDateTime(page, '報名截止時間', registrationDeadline);
     await page.getByRole('textbox', { name: '地點' }).fill('38 會所');
     await page.getByRole('textbox', { name: '說明' }).fill('Playwright 關閉報名後修改限制測試');
     await page.getByRole('button', { name: '建立聚會' }).click();
@@ -430,6 +430,13 @@ function formatDateTimeLocal(value: Date) {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
+async function fillMeetingDateTime(page: import('@playwright/test').Page, groupName: string, value: string) {
+  const [date, time] = value.split('T');
+  const group = page.getByRole('group', { name: groupName });
+  await group.getByLabel('日期').fill(date);
+  await group.getByLabel('時間').selectOption(time);
+}
+
 async function selectOptionByTextStart(locator: Locator, textStart: string) {
   const optionValue = await locator.evaluate((element, startText) => {
     const select = element as HTMLSelectElement;
@@ -455,8 +462,8 @@ async function createMeeting(page: import('@playwright/test').Page, title: strin
   await expandMeetingManagement(page);
   await page.getByRole('button', { name: '新增聚會' }).click();
   await page.getByRole('textbox', { name: '聚會名稱' }).fill(title);
-  await page.getByLabel('聚會時間').fill(formatDateTimeLocal(daysFromNow(days, hour, 0)));
-  await page.getByLabel('報名截止時間').fill(formatDateTimeLocal(daysFromNow(days - 1, 18, 0)));
+  await fillMeetingDateTime(page, '聚會時間', formatDateTimeLocal(daysFromNow(days, hour, 0)));
+  await fillMeetingDateTime(page, '報名截止時間', formatDateTimeLocal(daysFromNow(days - 1, 18, 0)));
   await page.getByRole('textbox', { name: '地點' }).fill('38 會所');
   await page.getByRole('textbox', { name: '說明' }).fill(description);
   await page.getByRole('button', { name: '建立聚會' }).click();

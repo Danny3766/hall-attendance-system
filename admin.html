@@ -162,14 +162,32 @@
                 </label>
 
                 <div class="form-row">
-                  <label>
-                    聚會時間
-                    <input name="meeting_date" type="datetime-local" required>
-                  </label>
-                  <label>
-                    報名截止時間
-                    <input name="registration_deadline" type="datetime-local">
-                  </label>
+                  <fieldset class="datetime-picker">
+                    <legend>聚會時間</legend>
+                    <div class="datetime-picker-grid">
+                      <label>
+                        日期
+                        <input name="meeting_date_date" type="date" required>
+                      </label>
+                      <label>
+                        時間
+                        <select name="meeting_date_time" required></select>
+                      </label>
+                    </div>
+                  </fieldset>
+                  <fieldset class="datetime-picker">
+                    <legend>報名截止時間</legend>
+                    <div class="datetime-picker-grid">
+                      <label>
+                        日期
+                        <input name="registration_deadline_date" type="date">
+                      </label>
+                      <label>
+                        時間
+                        <select name="registration_deadline_time"></select>
+                      </label>
+                    </div>
+                  </fieldset>
                 </div>
 
                 <label>

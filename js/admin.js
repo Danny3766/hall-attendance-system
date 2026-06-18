@@ -10,6 +10,7 @@ const REGISTRATIONS_PAGE_SIZE = 20;
 
 document.addEventListener("DOMContentLoaded", async () => {
   $("#loginPanel").hidden = true;
+  initMeetingDateTimeControls();
   $("#loginForm").addEventListener("submit", handleLogin);
   $("#toggleRegistrationFilters").addEventListener("click", toggleRegistrationFilters);
   $("#toggleMeetingManagement").addEventListener("click", toggleMeetingManagement);
@@ -224,9 +225,9 @@ function collectMeetingForm(form) {
   return {
     title: fields.namedItem("title").value.trim(),
     description: fields.namedItem("description").value.trim() || null,
-    meeting_date: toIsoDateTime(fields.namedItem("meeting_date").value),
+    meeting_date: toIsoDateTime(getDateTimeControlValue(form, "meeting_date")),
     location: fields.namedItem("location").value.trim() || null,
-    registration_deadline: toIsoDateTime(fields.namedItem("registration_deadline").value),
+    registration_deadline: toIsoDateTime(getDateTimeControlValue(form, "registration_deadline")),
     is_open: fields.namedItem("is_open").checked,
   };
 }
@@ -244,6 +245,52 @@ function toIsoDateTime(value) {
   return value ? new Date(`${value}${value.length === 16 ? ":00" : ""}${TAIWAN_UTC_OFFSET}`).toISOString() : null;
 }
 
+function initMeetingDateTimeControls() {
+  const form = $("#meetingForm");
+  fillTimeSelect(form.elements.namedItem("meeting_date_time"), "10:00");
+  fillTimeSelect(form.elements.namedItem("registration_deadline_time"), "20:00");
+}
+
+function fillTimeSelect(select, defaultValue) {
+  if (!select) return;
+  select.innerHTML = "";
+
+  for (let hour = 0; hour < 24; hour += 1) {
+    for (const minute of [0, 30]) {
+      const value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = value;
+      option.selected = value === defaultValue;
+      select.appendChild(option);
+    }
+  }
+}
+
+function getDateTimeControlValue(form, name) {
+  const date = form.elements.namedItem(`${name}_date`)?.value || "";
+  const time = form.elements.namedItem(`${name}_time`)?.value || "";
+  return date && time ? `${date}T${time}` : "";
+}
+
+function setDateTimeControlValue(form, name, value) {
+  const dateInput = form.elements.namedItem(`${name}_date`);
+  const timeSelect = form.elements.namedItem(`${name}_time`);
+  const localValue = toLocalDateTimeInputValue(value);
+
+  if (!dateInput || !timeSelect) return;
+
+  if (!localValue) {
+    dateInput.value = "";
+    timeSelect.value = name === "registration_deadline" ? "20:00" : "10:00";
+    return;
+  }
+
+  const [date, time] = localValue.split("T");
+  dateInput.value = date || "";
+  timeSelect.value = time || timeSelect.value;
+}
+
 function setMeetingSaving(isSaving, text) {
   const button = $("#saveMeetingButton");
   button.disabled = isSaving;
@@ -259,6 +306,8 @@ function resetMeetingForm(options = {}) {
   form.reset();
   form.elements.namedItem("meeting_id").value = "";
   form.elements.namedItem("is_open").checked = true;
+  setDateTimeControlValue(form, "meeting_date", null);
+  setDateTimeControlValue(form, "registration_deadline", null);
   $("#meetingFormTitle").textContent = "建立聚會";
   $("#saveMeetingButton").textContent = "建立聚會";
   $("#saveMeetingButton").disabled = false;
@@ -553,8 +602,8 @@ function startEditMeeting(meetingId) {
   const form = $("#meetingForm");
   form.elements.namedItem("meeting_id").value = meeting.id;
   form.elements.namedItem("title").value = meeting.title || "";
-  form.elements.namedItem("meeting_date").value = toLocalDateTimeInputValue(meeting.meeting_date);
-  form.elements.namedItem("registration_deadline").value = toLocalDateTimeInputValue(meeting.registration_deadline);
+  setDateTimeControlValue(form, "meeting_date", meeting.meeting_date);
+  setDateTimeControlValue(form, "registration_deadline", meeting.registration_deadline);
   form.elements.namedItem("location").value = meeting.location || "";
   form.elements.namedItem("description").value = meeting.description || "";
   form.elements.namedItem("is_open").checked = Boolean(meeting.is_open);

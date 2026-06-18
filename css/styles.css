@@ -386,6 +386,27 @@ textarea {
 
 textarea { resize: vertical; line-height: 1.6; }
 
+.datetime-picker {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.datetime-picker legend {
+  padding: 0;
+  color: #455042;
+  font-weight: 800;
+}
+
+.datetime-picker-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(120px, 0.8fr);
+  gap: 10px;
+}
+
 input:focus,
 select:focus,
 textarea:focus {
