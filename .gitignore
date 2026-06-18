@@ -1,4 +1,6 @@
 js/config.js
+.env
+.env.*
 docs/
 .vscode/
 Thumbs.db
