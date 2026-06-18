@@ -107,6 +107,7 @@ async function rejectUnauthorizedAdmin() {
   await db.auth.signOut();
   $("#adminPanel").hidden = true;
   $("#loginPanel").hidden = false;
+  $("#loginForm").reset();
   showMessage("#adminMessage", "此帳號沒有管理權限。", "error");
 }
 
@@ -141,11 +142,17 @@ async function handleLogout() {
   await db.auth.signOut();
   $("#adminPanel").hidden = true;
   $("#loginPanel").hidden = false;
+  resetLoginForm();
 }
 
 function showAdmin() {
   $("#loginPanel").hidden = true;
   $("#adminPanel").hidden = false;
+}
+
+function resetLoginForm() {
+  $("#loginForm").reset();
+  showMessage("#adminMessage", "", "info");
 }
 
 function toggleRegistrationFilters() {
