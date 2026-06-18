@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = $("#adminRegisterForm");
 
   if (!window.APP_CONFIG.ADMIN_REGISTRATION_ENABLED) {
-    showMessage("#registerMessage", "管理者註冊目前已關閉。若要初次建立帳號，請先在 js/config.js 開啟 ADMIN_REGISTRATION_ENABLED。", "error");
+    showMessage("#registerMessage", "管理者註冊目前未開放。", "error");
     $("#registerButton").disabled = true;
     return;
   }
