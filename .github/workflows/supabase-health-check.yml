@@ -1,0 +1,59 @@
+name: Supabase Health Check
+
+on:
+  schedule:
+    # 03:17 UTC (11:17 Asia/Taipei), every third day of the month.
+    # The longest interval across a month boundary is four days.
+    - cron: "17 3 */3 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-health-check
+  cancel-in-progress: false
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call health-check RPC
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${SUPABASE_URL}" || -z "${SUPABASE_ANON_KEY}" ]]; then
+            echo "::error::Missing SUPABASE_URL or SUPABASE_ANON_KEY repository secret."
+            exit 1
+          fi
+
+          response="$(curl \
+            --silent \
+            --show-error \
+            --fail-with-body \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --retry 3 \
+            --retry-delay 5 \
+            --retry-all-errors \
+            --request POST \
+            --header "Content-Type: application/json" \
+            --header "apikey: ${SUPABASE_ANON_KEY}" \
+            --header "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            --data '{}' \
+            "${SUPABASE_URL%/}/rest/v1/rpc/health_check")"
+
+          node -e '
+            const result = JSON.parse(process.argv[1]);
+            if (result?.status !== "ok") {
+              console.error("Unexpected health-check response.");
+              process.exit(1);
+            }
+          ' "${response}"
+
+          echo "Supabase health check succeeded."

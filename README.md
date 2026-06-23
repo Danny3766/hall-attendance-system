@@ -28,3 +28,7 @@
 
 - 後台僅開放授權管理者使用。
 - 報名資料儲存在 Supabase，並透過資料庫權限控管公開與管理行為。
+
+## 維護
+
+- Supabase 定期健康檢查、首次啟用與故障處理請參考 [MAINTENANCE.md](MAINTENANCE.md)。

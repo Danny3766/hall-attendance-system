@@ -318,3 +318,12 @@ as $$
   order by r.updated_at desc, r.created_at desc
   limit 1;
 $$;
+
+create or replace function public.health_check()
+returns jsonb
+language sql
+stable
+set search_path = ''
+as $$
+  select jsonb_build_object('status', 'ok');
+$$;

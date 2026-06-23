@@ -64,6 +64,8 @@ grant execute on function create_registration(uuid, text, text, text, boolean, i
 grant execute on function update_registration_by_token(uuid, text, text, text, text, boolean, integer, integer, integer, text, text) to anon, authenticated;
 grant execute on function create_admin_profile(uuid, text) to anon, authenticated;
 grant execute on function find_registration_for_success(uuid, text, text, text) to anon, authenticated;
+revoke execute on function public.health_check() from public;
+grant execute on function public.health_check() to anon;
 
 drop policy if exists "Anyone can check admin usernames" on admin_profiles;
 create policy "Anyone can check admin usernames"
